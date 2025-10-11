@@ -1,10 +1,10 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -27,7 +27,8 @@ export default function TabLayout() {
         name="laps"
         options={{
           title: 'Laps',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          //use car-off icon if client is disconnected
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="car-connected" size={24} color="black" />,
         }}
       />
     </Tabs>

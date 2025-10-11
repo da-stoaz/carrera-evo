@@ -1,4 +1,4 @@
-import { disconnectMqtt, initMqtt, publishThrottle } from "@/app/services/mqttClient";
+import { disconnectMqtt, initMqtt, publishThrottle } from "@/lib/mqttClient";
 import { useEffect } from 'react';
 
 export function useMqtt() {
