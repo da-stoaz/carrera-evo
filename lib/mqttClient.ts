@@ -4,7 +4,7 @@ import Paho from "paho-mqtt";
 // The Paho.Client instance
 let client: Paho.Client | null = null;
 
-const host = '10.20.131.101'; 
+const host = 'localhost'; 
 
 // --- Connection and Lifecycle ---
 

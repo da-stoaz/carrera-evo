@@ -28,7 +28,7 @@ export default function TabLayout() {
         options={{
           title: 'Laps',
           //use car-off icon if client is disconnected
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="car-connected" size={24} color="black" />,
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="car-connected" size={24} color={color} />,
         }}
       />
     </Tabs>
