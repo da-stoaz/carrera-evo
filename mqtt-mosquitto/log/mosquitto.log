@@ -1,0 +1,86 @@
+1760353220: mosquitto version 2.0.22 starting
+1760353220: Config loaded from /mosquitto/config/mosquitto.conf.
+1760353220: Opening ipv4 listen socket on port 1883.
+1760353220: Opening ipv6 listen socket on port 1883.
+1760353220: Opening websockets listen socket on port 9001.
+1760353220: mosquitto version 2.0.22 running
+1760355151: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1760355743: New connection from 192.168.65.1:33574 on port 1883.
+1760355743: Client <unknown> disconnected due to protocol error.
+1760355743: New connection from 192.168.65.1:34657 on port 1883.
+1760355743: Client <unknown> disconnected due to protocol error.
+1760355804: New connection from 192.168.65.1:53293 on port 1883.
+1760355804: Client <unknown> disconnected due to protocol error.
+1760355804: New connection from 192.168.65.1:44627 on port 1883.
+1760355804: Client <unknown> disconnected due to protocol error.
+1760355805: New connection from 192.168.65.1:35065 on port 1883.
+1760355805: Client <unknown> disconnected due to protocol error.
+1760355806: New connection from 192.168.65.1:48164 on port 1883.
+1760355806: Client <unknown> disconnected due to protocol error.
+1760355818: New connection from 192.168.65.1:45387 on port 1883.
+1760355818: Client <unknown> disconnected due to protocol error.
+1760355818: New connection from 192.168.65.1:45277 on port 1883.
+1760355818: Client <unknown> disconnected due to protocol error.
+1760355821: New connection from 192.168.65.1:45336 on port 1883.
+1760355821: Client <unknown> disconnected due to protocol error.
+1760355821: New connection from 192.168.65.1:28771 on port 1883.
+1760355821: Client <unknown> disconnected due to protocol error.
+1760355839: New connection from 192.168.65.1:24734 on port 1883.
+1760355839: Client <unknown> disconnected due to protocol error.
+1760355839: New connection from 192.168.65.1:43570 on port 1883.
+1760355839: Client <unknown> disconnected due to protocol error.
+1760355841: New connection from 192.168.65.1:27890 on port 1883.
+1760355841: Client <unknown> disconnected due to protocol error.
+1760355841: New connection from 192.168.65.1:23675 on port 1883.
+1760355841: Client <unknown> disconnected due to protocol error.
+1760355843: New connection from 192.168.65.1:27259 on port 1883.
+1760355843: Client <unknown> disconnected due to protocol error.
+1760355843: New connection from 192.168.65.1:22951 on port 1883.
+1760355843: Client <unknown> disconnected due to protocol error.
+1760355862: New connection from 192.168.65.1:23002 on port 1883.
+1760355862: Client <unknown> disconnected due to protocol error.
+1760355862: New connection from 192.168.65.1:46861 on port 1883.
+1760355862: Client <unknown> disconnected due to protocol error.
+1760355864: New connection from 192.168.65.1:16804 on port 1883.
+1760355864: Client <unknown> disconnected due to protocol error.
+1760355864: New connection from 192.168.65.1:17196 on port 1883.
+1760355864: Client <unknown> disconnected due to protocol error.
+1760355913: New connection from 192.168.65.1:42341 on port 1883.
+1760355913: Client <unknown> disconnected due to protocol error.
+1760355913: New connection from 192.168.65.1:63455 on port 1883.
+1760355913: Client <unknown> disconnected due to protocol error.
+1760355915: New connection from 192.168.65.1:61909 on port 1883.
+1760355915: Client <unknown> disconnected due to protocol error.
+1760355915: New connection from 192.168.65.1:58823 on port 1883.
+1760355915: Client <unknown> disconnected due to protocol error.
+1760355918: New connection from 192.168.65.1:30303 on port 1883.
+1760355918: Client <unknown> disconnected due to protocol error.
+1760355918: New connection from 192.168.65.1:35046 on port 1883.
+1760355918: Client <unknown> disconnected due to protocol error.
+1760356224: New connection from 192.168.65.1:25910 on port 1883.
+1760356224: New client connected from 192.168.65.1:25910 as auto-C8F195C3-B40E-2A43-02C8-5B6768E7343B (p2, c1, k60).
+1760356242: Client auto-C8F195C3-B40E-2A43-02C8-5B6768E7343B closed its connection.
+1760356250: New connection from 192.168.65.1:18625 on port 1883.
+1760356250: New client connected from 192.168.65.1:18625 as auto-F546F654-E83A-0D2F-72B5-27FAED98D9F8 (p2, c1, k60).
+1760356360: Client auto-F546F654-E83A-0D2F-72B5-27FAED98D9F8 disconnected.
+1760356560: New connection from 192.168.65.1:47706 on port 1883.
+1760356560: New client connected from 192.168.65.1:47706 as auto-23CC36CD-60A9-1B7C-5D78-E546AD570343 (p2, c1, k60).
+1760356571: New connection from 192.168.65.1:50573 on port 1883.
+1760356571: New client connected from 192.168.65.1:50573 as auto-03C97AA9-F8A1-C010-2612-7C40C7D3F718 (p2, c1, k60).
+1760356571: Client auto-03C97AA9-F8A1-C010-2612-7C40C7D3F718 disconnected.
+1760356952: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1760356977: New connection from 192.168.65.1:26373 on port 1883.
+1760356977: New client connected from 192.168.65.1:26373 as auto-EA52ACC5-CCFE-B3BF-EC0D-7D0C236934EC (p2, c1, k60).
+1760356977: Client auto-EA52ACC5-CCFE-B3BF-EC0D-7D0C236934EC disconnected.
+1760357011: New client connected from ::ffff:192.168.65.1:43916 as clientId-5fa9e7 (p2, c1, k60).
+1760357013: Client clientId-5fa9e7 disconnected.
+1760357014: New client connected from ::ffff:192.168.65.1:32221 as clientId-426260 (p2, c1, k60).
+1760357032: Client clientId-426260 disconnected.
+1760357043: New client connected from ::ffff:192.168.65.1:34769 as clientId-324b2e (p2, c1, k60).
+1760357044: Client clientId-324b2e disconnected.
+1760357046: New client connected from ::ffff:192.168.65.1:30295 as clientId-953578 (p2, c1, k60).
+1760357063: Client auto-23CC36CD-60A9-1B7C-5D78-E546AD570343 disconnected.
+1760357068: New connection from 192.168.65.1:65190 on port 1883.
+1760357068: New client connected from 192.168.65.1:65190 as auto-CA4C8779-B280-C844-27AC-51CBC7A8AAB4 (p2, c1, k60).
+1760357069: Client clientId-953578 disconnected.
+1760357071: New client connected from ::ffff:192.168.65.1:37065 as clientId-92adaa (p2, c1, k60).

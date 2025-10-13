@@ -5,9 +5,29 @@ import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { disconnectMqtt, initMqtt, publishThrottle } from '@/lib/mqttClient';
 import { Link } from 'expo-router';
+import { useEffect } from 'react';
+
 
 export default function HomeScreen() {
+
+  useEffect(() => {
+    initMqtt();
+
+    // Publish a test message after connecting
+    const timer = setTimeout(() => {
+      publishThrottle('test', 'Hello from Expo HomeScreen!');
+    }, 3000);
+
+    // Cleanup on unmount
+    return () => {
+      clearTimeout(timer);
+      disconnectMqtt();
+    };
+  }, []);
+
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}

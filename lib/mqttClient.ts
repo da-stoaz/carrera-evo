@@ -4,6 +4,8 @@ import Paho from "paho-mqtt";
 // The Paho.Client instance
 let client: Paho.Client | null = null;
 
+const host = '10.20.131.101'; 
+
 // --- Connection and Lifecycle ---
 
 export function initMqtt() {
@@ -14,8 +16,8 @@ export function initMqtt() {
 
   // Initialize the client instance
   client = new Paho.Client(
-    'mqtt.chargefix.com',
-    Number(8083),
+    host,
+    Number(9001),
     '/',
     `clientId-${Math.random().toString(16).substring(2, 8)}` // Use a unique client ID
   );
@@ -43,11 +45,11 @@ export function initMqtt() {
       client!.subscribe('test');
     },
     onFailure: (error) => {
-      console.error('[MQTT] Connection failed:', error);
+      console.error(error)
     },
-    userName: 'ubuntu',
-    password: 'Charge.1988',
-    useSSL: true,
+    // userName: 'ubuntu',
+    // password: 'Charge.1988',
+    useSSL: false,
   });
 }
 
