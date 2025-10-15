@@ -80,7 +80,8 @@ export default function ThrottleControl() {
 
     const trackFillStyle = useAnimatedStyle(() => {
         return {
-            height: SLIDER_HEIGHT - positionY.value - THUMB_RADIUS,
+            top: positionY.value - THUMB_RADIUS,
+            height: SLIDER_HEIGHT - (positionY.value - THUMB_RADIUS),
         };
     });
 
@@ -131,7 +132,6 @@ const styles = StyleSheet.create({
     trackFill: {
         position: 'absolute',
         width: 80,
-        bottom: 0,
         backgroundColor: 'red',
         borderRadius: 40,
     },
