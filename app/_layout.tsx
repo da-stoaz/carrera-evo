@@ -5,17 +5,15 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context'; // Add this import
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <SafeAreaProvider> {/* Add this wrapper */}
+    <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <GestureHandlerRootView>
           <Stack>
