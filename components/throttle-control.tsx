@@ -15,140 +15,144 @@ const THROTTLE_MIN = 0;
 const THROTTLE_MAX = 100;
 
 export default function ThrottleControl() {
-  const thumbY = useSharedValue(SLIDER_HEIGHT);
-  const startY = useSharedValue(0);
-  const [throttleValue, setThrottleValue] = useState(0);
+    const thumbY = useSharedValue(SLIDER_HEIGHT);
+    const startY = useSharedValue(0);
+    const [throttleValue, setThrottleValue] = useState(0);
 
-  const getThrottleValue = (yPosition: number) => {
-      'worklet'; // Mark as worklet
-      // The slider is inverted: Y=SLIDER_HEIGHT is 0%, Y=0 is 100%
-      return interpolate(
-          yPosition, 
-          [SLIDER_HEIGHT, 0], 
-          [THROTTLE_MIN, THROTTLE_MAX],
-          Extrapolation.CLAMP // Use enum instead of string
-      );
-  };
-  
-  const publishThrottle = (value: number) => {
-    const roundedValue = Math.round(value * 10) / 10;
-    setThrottleValue(roundedValue); 
-    console.log(`Throttle: ${roundedValue.toFixed(1)}%`); // Fix template string
-    // Example: sendDataToCar(roundedValue);
-  };
+    const getThrottleValue = (yPosition: number) => {
+        'worklet'; // Mark as worklet
+        // The slider is inverted: Y=SLIDER_HEIGHT is 0%, Y=0 is 100%
+        return interpolate(
+            yPosition,
+            [SLIDER_HEIGHT, 0],
+            [THROTTLE_MIN, THROTTLE_MAX],
+            Extrapolation.CLAMP // Use enum instead of string
+        );
+    };
 
-  // Define the Gesture using the builder
-  const panGesture = Gesture.Pan()
-    .onStart((event: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => { 
-      'worklet';
-      startY.value = thumbY.value; 
-    })
-    .onUpdate((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
-      'worklet';
-      // Calculate the new raw Y position, clamping it within the slider bounds
-      let newY = startY.value + event.translationY;
-      newY = Math.min(Math.max(newY, 0), SLIDER_HEIGHT);
-      
-      // Update the visual position of the thumb
-      thumbY.value = newY;
+    const publishThrottle = (value: number) => {
+        const roundedValue = Math.round(value * 10) / 10;
+        if (value !== throttleValue) {
+            console.log(`Throttle: ${roundedValue.toFixed(1)}%`); // Fix template string
+            //send only if changed
+            // Example: sendDataToCar(roundedValue);
+        }
+        setThrottleValue(roundedValue);
 
-      // Calculate throttle percentage and publish it
-      const value = getThrottleValue(thumbY.value);
-      runOnJS(publishThrottle)(value);
-    })
-    .onEnd(() => {
-      'worklet';
-      // Release to set back to 0
-      thumbY.value = SLIDER_HEIGHT; // Visual snap back to the bottom (0%)
-      
-      // Send 0% command on the JS thread
-      runOnJS(publishThrottle)(THROTTLE_MIN); 
+    };
+
+    // Define the Gesture using the builder
+    const panGesture = Gesture.Pan()
+        .onStart((event: GestureStateChangeEvent<PanGestureHandlerEventPayload>) => {
+            'worklet';
+            startY.value = thumbY.value;
+        })
+        .onUpdate((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
+            'worklet';
+            // Calculate the new raw Y position, clamping it within the slider bounds
+            let newY = startY.value + event.translationY;
+            newY = Math.min(Math.max(newY, 0), SLIDER_HEIGHT);
+
+            // Update the visual position of the thumb
+            thumbY.value = newY;
+
+            // Calculate throttle percentage and publish it
+            const value = getThrottleValue(thumbY.value);
+            runOnJS(publishThrottle)(value);
+        })
+        .onEnd(() => {
+            'worklet';
+            // Release to set back to 0
+            thumbY.value = SLIDER_HEIGHT; // Visual snap back to the bottom (0%)
+
+            // Send 0% command on the JS thread
+            runOnJS(publishThrottle)(THROTTLE_MIN);
+        });
+
+    // Animated styles (unchanged)
+    const thumbStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateY: thumbY.value }],
+        };
     });
 
-  // Animated styles (unchanged)
-  const thumbStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: thumbY.value }],
-    };
-  });
+    const trackFillStyle = useAnimatedStyle(() => {
+        return {
+            height: SLIDER_HEIGHT - thumbY.value,
+            top: thumbY.value,
+        };
+    });
 
-  const trackFillStyle = useAnimatedStyle(() => {
-    return {
-      height: SLIDER_HEIGHT - thumbY.value,
-      top: thumbY.value,
-    };
-  });
+    return (
+        <View style={styles.container}>
+            <Text style={styles.header}>Carrera Throttle Control</Text>
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Carrera Throttle Control</Text>
-      
-      <View style={styles.sliderContainer}>
-        {/* Track Fill */}
-        <Animated.View style={[styles.trackFill, trackFillStyle]} />
+            <View style={styles.sliderContainer}>
+                {/* Track Fill */}
+                <Animated.View style={[styles.trackFill, trackFillStyle]} />
 
-        
 
-        {/* Throttle Value Display */}
-        <Text style={styles.valueText}>{throttleValue.toFixed(0)}%</Text>
-        
-        {/* Use GestureDetector and pass the built panGesture */}
-        <GestureDetector gesture={panGesture}>
-            <Animated.View style={[styles.thumb, thumbStyle]} />
-        </GestureDetector>
-      </View>
-    </View>
-  );
+
+                {/* Throttle Value Display */}
+                <Text style={styles.valueText}>{throttleValue.toFixed(0)}%</Text>
+
+                {/* Use GestureDetector and pass the built panGesture */}
+                <GestureDetector gesture={panGesture}>
+                    <Animated.View style={[styles.thumb, thumbStyle]} />
+                </GestureDetector>
+            </View>
+        </View>
+    );
 }
 
 // Styles (unchanged)
 const styles = StyleSheet.create({
     container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#f0f0f0',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
     },
     header: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 40,
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 40,
     },
     sliderContainer: {
-      width: 80,
-      height: SLIDER_HEIGHT,
-      backgroundColor: '#ccc',
-      borderRadius: 40,
-      justifyContent: 'flex-start',
-      alignItems: 'center',
+        width: 80,
+        height: SLIDER_HEIGHT,
+        backgroundColor: '#ccc',
+        borderRadius: 40,
+        justifyContent: 'flex-start',
+        alignItems: 'center',
     },
     trackFill: {
-      position: 'absolute',
-      width: 80,
-      bottom: 0,
-      backgroundColor: 'red',
-      borderRadius: 40,
+        position: 'absolute',
+        width: 80,
+        bottom: 0,
+        backgroundColor: 'red',
+        borderRadius: 40,
     },
     thumb: {
-      position: 'absolute',
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: '#fff',
-      borderColor: '#333',
-      borderWidth: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.8,
-      shadowRadius: 2,
-      elevation: 5,
+        position: 'absolute',
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#fff',
+        borderColor: '#333',
+        borderWidth: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2,
+        elevation: 5,
     },
     valueText: {
-      position: 'relative',
-      top: 20,
-      left: 80,
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#333',
+        position: 'relative',
+        top: 20,
+        left: 80,
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
     },
-  });
+});
