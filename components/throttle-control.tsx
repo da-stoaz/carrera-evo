@@ -15,11 +15,16 @@ const THROTTLE_MIN = 0;
 const THROTTLE_MAX = 100;
 const THUMB_SIZE = 80;
 const THUMB_RADIUS = THUMB_SIZE / 2;
+const MAX_VOLTAGE = 15; // Assuming typical max voltage for Carrera slot cars; adjust based on actual setup
 
 export default function ThrottleControl() {
     const positionY = useSharedValue(SLIDER_HEIGHT - THUMB_RADIUS);
     const startY = useSharedValue(0);
     const [throttleValue, setThrottleValue] = useState(0);
+
+    // TODO: In the future, replace this calculation with real voltage data subscribed from the MQTT broker
+    // For now, calculate estimated voltage based on throttle position (may be inaccurate)
+    const voltage = (throttleValue / THROTTLE_MAX) * MAX_VOLTAGE;
 
     const getThrottleValue = (yPosition: number) => {
         'worklet'; // Mark as worklet
@@ -98,6 +103,9 @@ export default function ThrottleControl() {
                 {/* Throttle Value Display */}
                 <Text style={styles.valueText}>{throttleValue.toFixed(0)}%</Text>
 
+                {/* Voltage Display (on the other side) */}
+                <Text style={styles.voltageText}>{voltage.toFixed(1)}V</Text>
+
                 {/* Use GestureDetector and pass the built panGesture */}
                 <GestureDetector gesture={panGesture}>
                     <Animated.View style={[styles.thumb, thumbStyle]} />
@@ -127,7 +135,7 @@ const styles = StyleSheet.create({
         borderRadius: 40,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        overflow: 'hidden', // Add this to prevent thumb from sticking out
+        // Removed overflow: 'hidden' to allow texts to be visible outside the bounds
     },
     trackFill: {
         position: 'absolute',
@@ -152,7 +160,15 @@ const styles = StyleSheet.create({
     valueText: {
         position: 'absolute',
         top: 20,
-        left: 80,
+        left: 90,
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    voltageText: {
+        position: 'absolute',
+        top: 20,
+        left: -90, // Changed to left for better positioning on the left side; adjust as needed for spacing
         fontSize: 24,
         fontWeight: 'bold',
         color: '#333',
