@@ -87,11 +87,10 @@ export default function ThrottleControl() {
         {/* Track Fill */}
         <Animated.View style={[styles.trackFill, trackFillStyle]} />
 
-        {/* Vertical Track */}
-        <View style={styles.track} />
+        
 
         {/* Throttle Value Display */}
-        <Text style={styles.valueText}>{throttleValue.toFixed(1)}%</Text>
+        <Text style={styles.valueText}>{throttleValue.toFixed(0)}%</Text>
         
         {/* Use GestureDetector and pass the built panGesture */}
         <GestureDetector gesture={panGesture}>
@@ -116,32 +115,25 @@ const styles = StyleSheet.create({
       marginBottom: 40,
     },
     sliderContainer: {
-      width: 60,
+      width: 80,
       height: SLIDER_HEIGHT,
       backgroundColor: '#ccc',
-      borderRadius: 30,
+      borderRadius: 40,
       justifyContent: 'flex-start',
       alignItems: 'center',
     },
-    track: {
-      position: 'absolute',
-      width: 20,
-      height: '100%',
-      backgroundColor: '#aaa',
-      borderRadius: 10,
-    },
     trackFill: {
       position: 'absolute',
-      width: 20,
+      width: 80,
       bottom: 0,
       backgroundColor: 'red',
-      borderRadius: 10,
+      borderRadius: 40,
     },
     thumb: {
       position: 'absolute',
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+      width: 80,
+      height: 80,
+      borderRadius: 40,
       backgroundColor: '#fff',
       borderColor: '#333',
       borderWidth: 2,
@@ -152,7 +144,7 @@ const styles = StyleSheet.create({
       elevation: 5,
     },
     valueText: {
-      position: 'absolute',
+      position: 'relative',
       top: 20,
       left: 80,
       fontSize: 24,

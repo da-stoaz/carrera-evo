@@ -1,7 +1,8 @@
 import ThrottleControl from '@/components/throttle-control';
 import { disconnectMqtt, initMqtt, publishThrottle } from '@/lib/mqttClient';
 import { useEffect } from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context'; // Change this import
 
 
 export default function HomeScreen() {
@@ -23,7 +24,7 @@ export default function HomeScreen() {
 
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1 }}> {/* Add flex: 1 explicitly */}
       
      <ThrottleControl />
     </SafeAreaView>
