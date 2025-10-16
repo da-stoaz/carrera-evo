@@ -1,112 +1,250 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { MMKV } from 'react-native-mmkv';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+// Initialize MMKV storage. In a real app, you might do this in a central file.
+const storage = new MMKV();
 
-export default function TabTwoScreen() {
+// --- Type Definitions ---
+// Defines a single throttle data point with a relative timestamp.
+type ThrottleDataPoint = {
+  t: number; // Time in milliseconds relative to the start of the lap
+  v: number; // Throttle value (e.g., 0.0 to 1.0)
+};
+
+// Defines the structure of a complete Lap object used in the component's state.
+type Lap = {
+  id: string;          // The unique key from storage, e.g., "lap_1729110960000"
+  date: number;        // The absolute timestamp (ms) when the lap started
+  lapTime: number;     // The total duration of the lap in seconds
+  throttleData: ThrottleDataPoint[];
+};
+
+// --- Component ---
+export default function LapsScreen() {
+  const [laps, setLaps] = useState<Lap[]>([]);
+  const [selectedLap, setSelectedLap] = useState<Lap | null>(null);
+
+  // Load laps from storage when the component mounts.
+  useEffect(() => {
+    loadLaps();
+  }, []);
+
+  /**
+   * Loads all lap data from MMKV storage.
+   * It finds all keys prefixed with "lap_", then parses each one into a Lap object.
+   */
+  const loadLaps = () => {
+    try {
+      const lapKeys = storage.getAllKeys().filter((key) => key.startsWith('lap_'));
+
+      const loadedLaps: Lap[] = lapKeys.map((key) => {
+        const json = storage.getString(key);
+        if (!json) return null;
+
+        const throttleData: ThrottleDataPoint[] = JSON.parse(json);
+        const dateTimestamp = parseInt(key.split('_')[1], 10);
+
+        return {
+          id: key,
+          date: dateTimestamp,
+          lapTime: calculateLapTime(throttleData),
+          throttleData,
+        };
+      }).filter((lap): lap is Lap => lap !== null) // Filter out any nulls from failed parses
+        .sort((a, b) => b.date - a.date); // Sort laps by date, newest first
+
+      setLaps(loadedLaps);
+    } catch (e) {
+      console.error('Failed to load laps from MMKV', e);
+    }
+  };
+
+  /**
+   * Deletes a single lap from both MMKV storage and the component's state.
+   * @param lapId The unique ID/key of the lap to delete.
+   */
+  const deleteLap = (lapId: string) => {
+    try {
+      storage.delete(lapId);
+      // Update state to reflect the deletion in the UI immediately
+      setLaps((prevLaps) => prevLaps.filter((lap) => lap.id !== lapId));
+    } catch (e) {
+      console.error(`Failed to delete lap ${lapId}`, e);
+    }
+  };
+
+  const calculateAverageGas = (throttleData: ThrottleDataPoint[]) => {
+    if (!throttleData || throttleData.length === 0) return '0.0';
+    const sum = throttleData.reduce((acc, { v }) => acc + v, 0);
+    // Assuming 'v' is 0-1, multiply by 100 for percentage
+    return ((sum / throttleData.length) * 100).toFixed(1);
+  };
+
+  const calculateLapTime = (throttleData: ThrottleDataPoint[]) => {
+    if (!throttleData || throttleData.length === 0) return 0;
+    // The lap time is simply the timestamp of the last data point
+    const lastTimestamp = throttleData[throttleData.length - 1].t;
+    return lastTimestamp / 1000; // Convert ms to seconds
+  };
+
+  const replayLap = (throttleData: ThrottleDataPoint[]) => {
+    if (!throttleData || throttleData.length === 0) return;
+    console.log('Starting lap replay...');
+    throttleData.forEach(({ t, v }) => {
+      setTimeout(() => {
+        // Replace with actual publish to MQTT, e.g., publishThrottle('throttle/topic', v.toString());
+        console.log(`Replaying throttle at ${t}ms: ${v.toFixed(2)}`);
+      }, t); // 't' is already relative to the start, no subtraction needed
+    });
+  };
+
+  const handleDeletePress = (id: string) => {
+    Alert.alert('Löschen', 'Sind Sie sicher, dass Sie diese Runde löschen möchten?', [
+      { text: 'Abbrechen', style: 'cancel' },
+      {
+        text: 'Löschen',
+        style: 'destructive',
+        onPress: () => deleteLap(id),
+      },
+    ]);
+  };
+
+  const renderItem = ({ item }: { item: Lap }) => (
+    <View style={styles.listItem}>
+      <View style={styles.lapInfo}>
+        <Text style={styles.lapTimeText}>{item.lapTime.toFixed(2)}s</Text>
+        <Text style={styles.lapDateText}>{new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</Text>
+      </View>
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={() => replayLap(item.throttleData)}>
+          <Text style={styles.buttonText}>Abspielen</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setSelectedLap(item)}>
+          <Text style={styles.buttonText}>Details</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDeletePress(item.id)}>
+          <Text style={[styles.buttonText, styles.deleteButtonText]}>Löschen</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Laps
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/laps.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={laps}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={<Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>}
+      />
+      <Modal
+        visible={!!selectedLap}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setSelectedLap(null)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {selectedLap && (
+              <>
+                <Text style={styles.modalTitle}>Rundendetails</Text>
+                <Text style={styles.modalDetail}>Durchschnittliche Gasposition: {calculateAverageGas(selectedLap.throttleData)}%</Text>
+                <Text style={styles.modalDetail}>Aufgezeichnet am: {new Date(selectedLap.date).toLocaleString('de-DE')}</Text>
+                <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedLap(null)}>
+                  <Text style={styles.closeButtonText}>Schließen</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#121212', // Darker background
   },
-  titleContainer: {
+  listItem: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: '#1E1E1E',
+  },
+  lapInfo: {
+    flex: 1,
+  },
+  lapTimeText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  lapDateText: {
+    color: '#aaa',
+    fontSize: 12,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#007AFF', // Brighter blue for actions
+    marginLeft: 15,
+    fontSize: 16,
+  },
+  deleteButtonText: {
+    color: '#FF3B30', // Red for delete
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 18,
+    color: '#888',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalContent: {
+    backgroundColor: '#2C2C2E',
+    padding: 20,
+    borderRadius: 14,
+    alignItems: 'flex-start',
+    width: '90%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 15,
+    alignSelf: 'center',
+  },
+  modalDetail: {
+    fontSize: 16,
+    color: '#DDD',
+    marginBottom: 8,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    alignSelf: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

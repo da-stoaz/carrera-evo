@@ -23,7 +23,7 @@ export default function HomeScreen() {
   return (
     // Add flex: 1 explicitly (moved comment outside JSX)
     <SafeAreaView style={{ flex: 1 }}>
-      
+
      <ThrottleControl />
     </SafeAreaView>
   );
