@@ -1,165 +1,164 @@
+// app/(tabs)/laps.tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { MMKV } from 'react-native-mmkv';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Initialize MMKV storage. In a real app, you might do this in a central file.
-const storage = new MMKV();
+// If needed for replay: import { publishThrottle } from '@/lib/mqttClient'; // Adjust based on your MQTT setup
 
 // --- Type Definitions ---
-// Defines a single throttle data point with a relative timestamp.
-type ThrottleDataPoint = {
-  t: number; // Time in milliseconds relative to the start of the lap
-  v: number; // Throttle value (e.g., 0.0 to 1.0)
-};
 
-// Defines the structure of a complete Lap object used in the component's state.
-type Lap = {
-  id: string;          // The unique key from storage, e.g., "lap_1729110960000"
-  date: number;        // The absolute timestamp (ms) when the lap started
-  lapTime: number;     // The total duration of the lap in seconds
+/**
+ * Represents a single throttle data point recorded during a lap.
+ */
+interface ThrottleDataPoint {
+  t: number; // Timestamp in milliseconds (e.g., from Date.now())
+  v: number; // Throttle value, likely 0-100%
+}
+
+/**
+ * Represents a single recorded lap.
+ */
+interface Lap {
+  id: number; // Unique identifier for the lap
+  date: number; // Timestamp of when the lap was recorded (e.g., from Date.now())
   throttleData: ThrottleDataPoint[];
-};
+  lapTime?: number; // Optional pre-calculated lap time in seconds
+}
 
-// --- Component ---
+
 export default function LapsScreen() {
   const [laps, setLaps] = useState<Lap[]>([]);
   const [selectedLap, setSelectedLap] = useState<Lap | null>(null);
 
-  // Load laps from storage when the component mounts.
   useEffect(() => {
     loadLaps();
   }, []);
 
-  /**
-   * Loads all lap data from MMKV storage.
-   * It finds all keys prefixed with "lap_", then parses each one into a Lap object.
-   */
-  const loadLaps = () => {
+  const loadLaps = async () => {
+    const throttlesample = Array.from({ length: 100000 }, (_, i) => ({
+      t: i, // unique ascending value
+      // v oscillates smoothly between 0 and 100 using a sine wave pattern
+      v: Math.round((Math.sin(i / 100) + 1) * 50)
+    }));
     try {
-      const lapKeys = storage.getAllKeys().filter((key) => key.startsWith('lap_'));
+      const l1: Lap = {
+        id: 12,
+        date: new Date("2025-10-15").getTime(),
+        throttleData: throttlesample
+      };
+      const json = await AsyncStorage.getItem('laps');
+      if (json) {
+        console.log(json)
+        setLaps([l1]);
 
-      const loadedLaps: Lap[] = lapKeys.map((key) => {
-        const json = storage.getString(key);
-        if (!json) return null;
-
-        const throttleData: ThrottleDataPoint[] = JSON.parse(json);
-        const dateTimestamp = parseInt(key.split('_')[1], 10);
-
-        return {
-          id: key,
-          date: dateTimestamp,
-          lapTime: calculateLapTime(throttleData),
-          throttleData,
-        };
-      }).filter((lap): lap is Lap => lap !== null) // Filter out any nulls from failed parses
-        .sort((a, b) => b.date - a.date); // Sort laps by date, newest first
-
-      setLaps(loadedLaps);
+        // setLaps(JSON.parse(json) as Lap[]);
+      } else {
+        setLaps([l1]);
+      }
     } catch (e) {
-      console.error('Failed to load laps from MMKV', e);
+      console.error('Failed to load laps', e);
     }
   };
 
-  /**
-   * Deletes a single lap from both MMKV storage and the component's state.
-   * @param lapId The unique ID/key of the lap to delete.
-   */
-  const deleteLap = (lapId: string) => {
+  const saveLaps = async (newLaps: Lap[]) => {
     try {
-      storage.delete(lapId);
-      // Update state to reflect the deletion in the UI immediately
-      setLaps((prevLaps) => prevLaps.filter((lap) => lap.id !== lapId));
+      await AsyncStorage.setItem('laps', JSON.stringify(newLaps));
     } catch (e) {
-      console.error(`Failed to delete lap ${lapId}`, e);
+      console.error('Failed to save laps', e);
     }
   };
 
-  const calculateAverageGas = (throttleData: ThrottleDataPoint[]) => {
-    if (!throttleData || throttleData.length === 0) return '0.0';
-    const sum = throttleData.reduce((acc, { v }) => acc + v, 0);
-    // Assuming 'v' is 0-1, multiply by 100 for percentage
-    return ((sum / throttleData.length) * 100).toFixed(1);
+  const calculateAverageGas = (throttleData: ThrottleDataPoint[]): string => {
+    if (!throttleData || !throttleData.length) return '0.0';
+    const sum = throttleData.reduce((acc, { v: value }) => acc + value, 0);
+    return (sum / throttleData.length).toFixed(1);
   };
 
-  const calculateLapTime = (throttleData: ThrottleDataPoint[]) => {
-    if (!throttleData || throttleData.length === 0) return 0;
-    // The lap time is simply the timestamp of the last data point
-    const lastTimestamp = throttleData[throttleData.length - 1].t;
-    return lastTimestamp / 1000; // Convert ms to seconds
+  const calculateLapTime = (throttleData: ThrottleDataPoint[]): string => {
+    if (!throttleData || !throttleData.length) return '0.00';
+    const start = throttleData[0].t;
+    const end = throttleData[throttleData.length - 1].t;
+    // Assuming time in ms, convert to seconds
+    return ((end - start) / 1000).toFixed(2);
   };
 
   const replayLap = (throttleData: ThrottleDataPoint[]) => {
-    if (!throttleData || throttleData.length === 0) return;
-    console.log('Starting lap replay...');
-    throttleData.forEach(({ t, v }) => {
+    if (!throttleData || !throttleData.length) return;
+    const startTime = throttleData[0].t;
+    throttleData.forEach(({ t: time, v: value }) => {
       setTimeout(() => {
-        // Replace with actual publish to MQTT, e.g., publishThrottle('throttle/topic', v.toString());
-        console.log(`Replaying throttle at ${t}ms: ${v.toFixed(2)}`);
-      }, t); // 't' is already relative to the start, no subtraction needed
+        console.log(time)
+        // Replace with actual publish to MQTT, e.g., publishThrottle('throttle/topic', value.toString());
+        console.log(`Replaying throttle: ${value}%`);
+      }, time - startTime);
     });
   };
 
-  const handleDeletePress = (id: string) => {
-    Alert.alert('Löschen', 'Sind Sie sicher, dass Sie diese Runde löschen möchten?', [
+  const handleDelete = (id: number) => {
+    Alert.alert('Löschen', 'Sind Sie sicher?', [
       { text: 'Abbrechen', style: 'cancel' },
       {
-        text: 'Löschen',
-        style: 'destructive',
-        onPress: () => deleteLap(id),
+        text: 'Löschen', onPress: () => {
+          const newLaps = laps.filter((lap) => lap.id !== id);
+          setLaps(newLaps);
+          saveLaps(newLaps);
+        }
       },
     ]);
   };
 
   const renderItem = ({ item }: { item: Lap }) => (
+
     <View style={styles.listItem}>
-      <View style={styles.lapInfo}>
-        <Text style={styles.lapTimeText}>{item.lapTime.toFixed(2)}s</Text>
-        <Text style={styles.lapDateText}>{new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</Text>
-      </View>
-      <View style={styles.actions}>
-        <TouchableOpacity onPress={() => replayLap(item.throttleData)}>
-          <Text style={styles.buttonText}>Abspielen</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setSelectedLap(item)}>
-          <Text style={styles.buttonText}>Details</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeletePress(item.id)}>
-          <Text style={[styles.buttonText, styles.deleteButtonText]}>Löschen</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Use the pre-calculated lapTime if available, otherwise calculate it. Casting to string for Text component. */}
+      <Text style={styles.listText}>{item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s</Text>
+      <Text style={styles.listText}>{new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</Text>
+      <TouchableOpacity onPress={() => replayLap(item.throttleData)}>
+        <Text style={styles.buttonText}>Abspielen</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => setSelectedLap(item)}>
+        <Text style={styles.buttonText}>Betrachten</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleDelete(item.id)}>
+        <Text style={styles.buttonText}>Löschen</Text>
+      </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={laps}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>}
-      />
-      <Modal
-        visible={!!selectedLap}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setSelectedLap(null)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {selectedLap && (
-              <>
-                <Text style={styles.modalTitle}>Rundendetails</Text>
-                <Text style={styles.modalDetail}>Durchschnittliche Gasposition: {calculateAverageGas(selectedLap.throttleData)}%</Text>
-                <Text style={styles.modalDetail}>Aufgezeichnet am: {new Date(selectedLap.date).toLocaleString('de-DE')}</Text>
-                <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedLap(null)}>
-                  <Text style={styles.closeButtonText}>Schließen</Text>
-                </TouchableOpacity>
-              </>
-            )}
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <FlatList<Lap> // Type the FlatList data
+          data={laps}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          ListEmptyComponent={<Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>}
+        />
+        <Modal
+          visible={!!selectedLap}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setSelectedLap(null)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {selectedLap && (
+                <>
+                  <Text style={styles.modalTitle}>Rundendetails</Text>
+                  <Text>Durchschnittliche Gasposition: {calculateAverageGas(selectedLap.throttleData)}%</Text>
+                  <Text>Timestamp der Aufzeichnung: {new Date(selectedLap.date).toLocaleString('de-DE')}</Text>
+                  {/* Display calculated lap time if pre-calculated isn't used */}
+                  <Text>Rundenzeit: {selectedLap.lapTime !== undefined ? selectedLap.lapTime.toFixed(2) : calculateLapTime(selectedLap.throttleData)}s</Text>
+
+                  <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedLap(null)}>
+                    <Text style={styles.closeButtonText}>Schließen</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 }
@@ -167,84 +166,56 @@ export default function LapsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Darker background
+    padding: 10,
+    backgroundColor: '#f0f0f0',
   },
   listItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    backgroundColor: '#1E1E1E',
+    borderBottomColor: '#ccc',
+    backgroundColor: 'white',
   },
-  lapInfo: {
-    flex: 1,
-  },
-  lapTimeText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  lapDateText: {
-    color: '#aaa',
-    fontSize: 12,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  listText: {
+    fontSize: 16,
+    marginRight: 10,
   },
   buttonText: {
-    color: '#007AFF', // Brighter blue for actions
-    marginLeft: 15,
-    fontSize: 16,
-  },
-  deleteButtonText: {
-    color: '#FF3B30', // Red for delete
+    color: 'blue',
+    marginLeft: 10,
   },
   emptyText: {
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: 20,
     fontSize: 18,
-    color: '#888',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'white',
     padding: 20,
-    borderRadius: 14,
-    alignItems: 'flex-start',
-    width: '90%',
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '80%',
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 15,
-    alignSelf: 'center',
-  },
-  modalDetail: {
-    fontSize: 16,
-    color: '#DDD',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    alignSelf: 'center',
+    backgroundColor: '#2196F3',
+    padding: 10,
+    borderRadius: 5,
   },
   closeButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
