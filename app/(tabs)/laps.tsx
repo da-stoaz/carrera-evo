@@ -1,4 +1,5 @@
 // app/(tabs)/laps.tsx
+import { publishThrottle } from '@/lib/mqttClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -89,7 +90,8 @@ export default function LapsScreen() {
       setTimeout(() => {
         console.log(time)
         // Replace with actual publish to MQTT, e.g., publishThrottle('throttle/topic', value.toString());
-        console.log(`Replaying throttle: ${value}%`);
+        //console.log(`Replaying throttle: ${value}%`);
+        publishThrottle(value)
       }, time - startTime);
     });
   };

@@ -1,3 +1,4 @@
+import { useMqtt } from '@/hooks/use-mqtt';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, GestureStateChangeEvent, GestureUpdateEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
@@ -21,6 +22,7 @@ export default function ThrottleControl() {
     const positionY = useSharedValue(SLIDER_HEIGHT - THUMB_RADIUS);
     const startY = useSharedValue(0);
     const [throttleValue, setThrottleValue] = useState(0);
+    const mqttThrottle = useMqtt();
 
     // TODO: In the future, replace this calculation with real voltage data subscribed from the MQTT broker
     // For now, calculate estimated voltage based on throttle position (may be inaccurate)
@@ -42,7 +44,8 @@ export default function ThrottleControl() {
         if (value !== throttleValue) {
             console.log(`Throttle: ${roundedValue.toFixed(1)}%`); // Fix template string
             //send only if changed
-            // Example: sendDataToCar(roundedValue);
+            mqttThrottle.publishThrottle(roundedValue);
+
         }
         setThrottleValue(roundedValue);
 
