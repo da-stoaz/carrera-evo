@@ -1,15 +1,13 @@
 import { publishThrottle } from '@/lib/mqttClient';
+import { calculateAverageGas, calculateLapTime, lttb } from "@/lib/utils";
+import { Lap, ThrottleDataPoint } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from 'react-native-progress';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
-import { calculateAverageGas, calculateLapTime, lttb } from "@/lib/utils";
-import { Lap, ThrottleDataPoint } from '@/types/types';
 
 export default function LapDetailsPage() {
   const router = useRouter();
@@ -26,46 +24,46 @@ export default function LapDetailsPage() {
   // Helper to re-create the sample logic
   const getSampleLaps = async () => {
     const throttlesample: ThrottleDataPoint[] = Array.from({ length: 10000 }, (_, i) => ({
-        t: i,
-        v: Math.round((Math.sin(i / 100) + 1) * 50)
+      t: i,
+      v: Math.round((Math.sin(i / 100) + 1) * 50)
     }));
     const laps: Lap[] = [
-        { id: 1, date: new Date("2025-10-15").getTime(), throttleData: throttlesample },
-        { id: 2, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(5000, 8888) },
-        { id: 3, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(444, 9330) },
-        { id: 4, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(3453, 10000) },
-        { id: 5, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(100, 8004) }
+      { id: 1, date: new Date("2025-10-15").getTime(), throttleData: throttlesample },
+      { id: 2, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(5000, 8888) },
+      { id: 3, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(444, 9330) },
+      { id: 4, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(3453, 10000) },
+      { id: 5, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(100, 8004) }
     ];
     return JSON.stringify(laps);
   };
-  
+
   // Load lap data based on the ID from the async storage (or sample data)
   useEffect(() => {
     if (lapId === null) return;
-    
+
     const loadLap = async () => {
-        try {
-            const json = await AsyncStorage.getItem('laps');
-            if (json) {
-                const laps: Lap[] = JSON.parse(json);
-                const selectedLap = laps.find(l => l.id === lapId);
-                if (selectedLap) {
-                    setLap(selectedLap);
-                } else {
-                    const sampleLapsJson = await getSampleLaps(); 
-                    const sampleLaps: Lap[] = JSON.parse(sampleLapsJson);
-                    const sampleLap = sampleLaps.find(l => l.id === lapId);
-                    if (sampleLap) {
-                        setLap(sampleLap);
-                    } else {
-                        router.back(); 
-                    }
-                }
+      try {
+        const json = await AsyncStorage.getItem('laps');
+        if (json) {
+          const laps: Lap[] = JSON.parse(json);
+          const selectedLap = laps.find(l => l.id === lapId);
+          if (selectedLap) {
+            setLap(selectedLap);
+          } else {
+            const sampleLapsJson = await getSampleLaps();
+            const sampleLaps: Lap[] = JSON.parse(sampleLapsJson);
+            const sampleLap = sampleLaps.find(l => l.id === lapId);
+            if (sampleLap) {
+              setLap(sampleLap);
+            } else {
+              router.back();
             }
-        } catch (e) {
-            console.error('Failed to load lap', e);
-            router.back();
+          }
         }
+      } catch (e) {
+        console.error('Failed to load lap', e);
+        router.back();
+      }
     };
     loadLap();
   }, [lapId, router]);
@@ -78,14 +76,14 @@ export default function LapDetailsPage() {
     }
     setProgress(0);
   };
-  
+
   const startReplay = () => {
     if (!lap || !lap.throttleData.length) return;
 
     setIsReplaying(true);
     setProgress(0);
     currentIndexRef.current = 0;
-    const throttleData = lap.throttleData; 
+    const throttleData = lap.throttleData;
 
     const playStep = () => {
       if (currentIndexRef.current >= throttleData.length) {
@@ -103,8 +101,8 @@ export default function LapDetailsPage() {
       setProgress(currentIndexRef.current / throttleData.length);
 
       currentIndexRef.current++;
-      const nextDelay = currentIndexRef.current < throttleData.length 
-        ? throttleData[currentIndexRef.current].t - point.t 
+      const nextDelay = currentIndexRef.current < throttleData.length
+        ? throttleData[currentIndexRef.current].t - point.t
         : 0;
 
       intervalRef.current = setTimeout(playStep, nextDelay);
@@ -126,11 +124,17 @@ export default function LapDetailsPage() {
     );
   }
 
-  const downsampledData = lttb(lap.throttleData, 500).map(p => ({value: p.v, label: ((p.t - lap.throttleData[0].t) / 1000).toFixed(2)}));
+  const downsampledData = lttb(lap.throttleData, 500).map(p => ({ value: p.v, label: ((p.t - lap.throttleData[0].t) / 1000).toFixed(2) }));
 
 
   return (
     <SafeAreaView style={styles.detailsContainer}>
+      <Stack.Screen
+        options={{
+          title: `Rundendetails ${lapId}`,
+          headerBackTitle: 'Laps',
+        }}
+      />
       <Text style={styles.modalTitle}>Rundendetails</Text>
       <Text>Durchschnittliche Gasposition: {calculateAverageGas(lap.throttleData)}%</Text>
       <Text>Timestamp der Aufzeichnung: {new Date(lap.date).toLocaleString('de-DE')}</Text>
@@ -151,8 +155,17 @@ export default function LapDetailsPage() {
       </View>
 
       <View style={styles.replayContainer}>
-        <Text>Loop:</Text>
-        <Switch value={loop} onValueChange={setLoop} />
+        <View style={
+          {
+            alignItems: 'center',
+            flex: 1,
+            flexDirection: 'row'
+          }
+        }>
+          <Text>Loop:</Text>
+          <Switch value={loop} onValueChange={setLoop} />
+        </View>
+
         {!isReplaying ? (
           <TouchableOpacity style={styles.replayButton} onPress={startReplay}>
             <Text style={styles.buttonText}>Abspielen</Text>

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -76,11 +76,15 @@ export default function LapsScreen() {
     >
       <View style={styles.infoContainer}>
         <Text style={styles.listText}>
-          Rundenzeit: {item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s
+          {item.id}
         </Text>
         <Text style={styles.listText}>
-          Datum: {new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
+          {new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
         </Text>
+        <Text style={styles.listText}>
+          {item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s
+        </Text>
+
       </View>
       <TouchableOpacity style={styles.deleteButton} onPress={(e) => {
         e.stopPropagation();
@@ -93,6 +97,7 @@ export default function LapsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
+      <Stack.Screen options={{ title: 'Laps' }} />
       <View style={styles.container}>
         <Text style={styles.header}>Aufgezeichnete Runden</Text>
         <FlatList<Lap>
