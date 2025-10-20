@@ -39,6 +39,13 @@ export default function TabLayout() {
                 tabBarIcon: ({ color }) => <MaterialCommunityIcons name="car-connected" size={24} color={color} />,
               }}
             />
+            <Tabs.Screen
+            name="settings"
+            options={{
+              title: "Settings",
+              tabBarIcon: ({color}) => <MaterialCommunityIcons name="car-settings" size={24} color={color} />
+            }}
+            />
           </Tabs>
         </GestureHandlerRootView>
       </ThemeProvider>

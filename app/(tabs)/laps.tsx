@@ -44,10 +44,10 @@ export default function LapsScreen() {
     try {
 
       const json = await AsyncStorage.getItem('laps');
-      if (json) {
+      if (json && JSON.parse(json).length > 0) {
         console.log(json)
-
-        setLaps(JSON.parse(json) as Lap[]);
+        let laps = JSON.parse(json);
+        setLaps(laps as Lap[]);
       } else {
         const laps = [
           {

@@ -1,11 +1,18 @@
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Paho from "paho-mqtt";
 
 // The Paho.Client instance
 let client: Paho.Client | null = null;
 
-const host = 'localhost';
+let host = 'localhost';
 const topic = "throttle";
+
+async function loadHost() {
+  const storedHost = await AsyncStorage.getItem('mqtt_host');
+  if (storedHost) {
+    host = storedHost;
+  }
+}
 
 
 // Queue to hold subscriptions requested before connection is established
@@ -16,7 +23,9 @@ const topicCallbacks: Map<string, (payload: string) => void> = new Map();
 
 // --- Connection and Lifecycle ---
 
-export function initMqtt() {
+export async function initMqtt() {
+  await loadHost();
+
   if (client) {
     console.warn("MQTT client is already initialized.");
     return;
@@ -79,6 +88,16 @@ export function disconnectMqtt() {
     }
   }
   client = null;
+}
+
+
+export async function setMqttHost(newHost: string) {
+  host = newHost;
+  await AsyncStorage.setItem('mqtt_host', newHost);
+  if (client) {
+    disconnectMqtt();
+    await initMqtt(); // Reconnect with new host
+  }
 }
 
 // --- Publishing Logic ---
