@@ -95,7 +95,6 @@ export default function ThrottleControl() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Carrera Throttle Control</Text>
 
             <View style={styles.sliderContainer}>
                 {/* Track Fill */}
@@ -125,11 +124,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f0f0f0',
-    },
-    header: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 40,
     },
     sliderContainer: {
         width: 80,

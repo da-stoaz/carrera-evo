@@ -1,7 +1,8 @@
 import ThrottleControl from '@/components/throttle-control';
-import { disconnectMqtt, initMqtt, publishThrottle } from '@/lib/mqttClient';
+import { disconnectMqtt, initMqtt, sendMessage } from '@/lib/mqttClient';
 import { useEffect } from 'react';
-import { SafeAreaView, } from 'react-native-safe-area-context';
+import { Button, StyleSheet, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
 
@@ -10,7 +11,7 @@ export default function HomeScreen() {
 
     // Publish a test message after connecting
     const timer = setTimeout(() => {
-      publishThrottle('test', 'Hello from Expo HomeScreen!');
+      sendMessage("throttle", "initialized")
     }, 3000);
 
     // Cleanup on unmount
@@ -23,8 +24,24 @@ export default function HomeScreen() {
   return (
     // Add flex: 1 explicitly (moved comment outside JSX)
     <SafeAreaView style={{ flex: 1 }}>
+      <Text style={styles.header}>Carrera Throttle Control</Text>
+      <Button
+        title="Record Lap"
+        onPress={() => {
+          // handle button press
+        }}
+      />
 
-     <ThrottleControl />
+      <ThrottleControl />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: "center",
+    marginBottom: 40,
+  },
+})

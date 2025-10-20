@@ -4,7 +4,7 @@ import Paho from "paho-mqtt";
 // The Paho.Client instance
 let client: Paho.Client | null = null;
 
-const host = 'localhost'; 
+const host = 'localhost';
 const topic = "throttle";
 
 // --- Connection and Lifecycle ---
@@ -76,11 +76,29 @@ export function publishThrottle(throttleValue: number) {
 
   const pahoMessage = new Paho.Message(throttleValue.toString());
   pahoMessage.destinationName = topic;
-  
+
   try {
     client.send(pahoMessage);
     console.log(`[MQTT] Published to ${topic}: ${throttleValue}`);
   } catch (e) {
     console.error(`[MQTT] Failed to publish to ${topic}:`, e);
+  }
+}
+
+export function sendMessage(topic: string, message: string) {
+  if (!client || !client.isConnected()) {
+    console.warn('[MQTT] Cannot publish, client is not connected.');
+    return
+  }
+
+  const pahoMessage = new Paho.Message(message)
+  pahoMessage.destinationName = topic;
+
+  try {
+    client.send(pahoMessage);
+    console.log(`[MQTT] Published to ${topic}: ${message}`);
+  } catch (e) {
+    console.error(`[MQTT] Failed to publish to ${topic}:`, e);
+
   }
 }
