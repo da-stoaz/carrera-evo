@@ -1,22 +1,23 @@
 import ThrottleControl from '@/components/throttle-control';
-import { disconnectMqtt, initMqtt, sendMessage } from '@/lib/mqttClient';
+import { disconnectMqtt, initMqtt, subscribeToTopic } from '@/lib/mqttClient';
 import { useEffect } from 'react';
 import { Button, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+
+function handleLightGateTriggered(payload: string) {
+    console.log(`Status update received: ${payload}`);
+}
 
 export default function HomeScreen() {
 
   useEffect(() => {
     initMqtt();
 
-    // Publish a test message after connecting
-    const timer = setTimeout(() => {
-      sendMessage("throttle", "initialized")
-    }, 3000);
+    subscribeToTopic('lightgate', handleLightGateTriggered);
 
     // Cleanup on unmount
     return () => {
-      clearTimeout(timer);
       disconnectMqtt();
     };
   }, []);

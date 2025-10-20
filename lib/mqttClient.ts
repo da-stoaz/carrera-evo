@@ -7,6 +7,13 @@ let client: Paho.Client | null = null;
 const host = 'localhost';
 const topic = "throttle";
 
+
+// Queue to hold subscriptions requested before connection is established
+const subscriptionQueue: { topic: string, callback: (payload: string) => void }[] = [];
+
+// A map to store callback functions for specific topics
+const topicCallbacks: Map<string, (payload: string) => void> = new Map();
+
 // --- Connection and Lifecycle ---
 
 export function initMqtt() {
@@ -41,8 +48,16 @@ export function initMqtt() {
   // Connect to the broker
   client.connect({
     onSuccess: () => {
-      console.log('[MQTT] Connected successfully.');
-      // Subscribe immediately upon connection
+      console.log('[MQTT] Connected successfully. Processing subscription queue...');
+      // 1. Process the subscriptions that were requested while connecting
+      subscriptionQueue.forEach(({ topic, callback }) => {
+        // Re-call the actual subscription logic
+        client!.subscribe(topic);
+        topicCallbacks.set(topic, callback);
+        console.log(`[MQTT] Queued subscription processed: ${topic}`);
+      });
+      subscriptionQueue.length = 0; // Clear the queue
+
       client!.subscribe('test');
     },
     onFailure: (error) => {
@@ -101,4 +116,30 @@ export function sendMessage(topic: string, message: string) {
     console.error(`[MQTT] Failed to publish to ${topic}:`, e);
 
   }
+}
+
+/**
+ * Subscribes to a specified topic and registers a function to execute 
+ * when a message is received on that topic.
+ * @param topic The MQTT topic to subscribe to.
+ * @param callback The function to call with the message payload when a message arrives.
+ */
+export function subscribeToTopic(topic: string, callback: (payload: string) => void) {
+  if (!client || !client.isConnected()) {
+    console.warn(`[MQTT] Client not connected. Queueing subscription for topic: ${topic}`);
+    // Queue the subscription request for later processing
+    subscriptionQueue.push({ topic, callback }); 
+    return;
+  }
+
+  // If connected, proceed as before
+  client.subscribe(topic, {
+    onSuccess: () => {
+      console.log(`[MQTT] Subscribed to topic: ${topic}`);
+      topicCallbacks.set(topic, callback);
+    },
+    onFailure: (error) => {
+      console.error(`[MQTT] Failed to subscribe to topic ${topic}:`, error);
+    }
+  });
 }
