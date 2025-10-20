@@ -1,5 +1,6 @@
 // app/(tabs)/laps.tsx
 import { publishThrottle } from '@/lib/mqttClient';
+import { Lap, ThrottleDataPoint } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Modal, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
@@ -7,30 +8,6 @@ import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from 'react-native-progress';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Type Definitions ---
-
-/**
- * Represents a single throttle data point recorded during a lap.
- */
-interface ThrottleDataPoint {
-  t: number; // Timestamp in milliseconds (e.g., from Date.now())
-  v: number; // Throttle value, likely 0-100%
-}
-
-/**
- * Represents a single recorded lap.
- */
-interface Lap {
-  id: number; // Unique identifier for the lap
-  date: number; // Timestamp of when the lap was recorded (e.g., from Date.now())
-  throttleData: ThrottleDataPoint[];
-  lapTime?: number; // Optional pre-calculated lap time in seconds
-}
-
-interface Point {
-  x: number;
-  y: number;
-}
 
 function lttb(data: ThrottleDataPoint[], threshold: number): ThrottleDataPoint[] {
   const dataLength = data.length;
@@ -135,8 +112,8 @@ function LapDetails({ lap, onClose }: { lap: Lap; onClose: () => void }) {
       setProgress(currentIndexRef.current / throttleData.length);
 
       currentIndexRef.current++;
-      const nextDelay = currentIndexRef.current < throttleData.length 
-        ? throttleData[currentIndexRef.current].t - point.t 
+      const nextDelay = currentIndexRef.current < throttleData.length
+        ? throttleData[currentIndexRef.current].t - point.t
         : 0;
 
       intervalRef.current = setTimeout(playStep, nextDelay);
@@ -158,7 +135,7 @@ function LapDetails({ lap, onClose }: { lap: Lap; onClose: () => void }) {
     return () => stopReplay(); // Cleanup on unmount
   }, []);
 
-  const downsampledData = lttb(throttleData, 500).map(p => ({value: p.v, label: ((p.t - throttleData[0].t) / 1000).toFixed(2)}));
+  const downsampledData = lttb(throttleData, 500).map(p => ({ value: p.v, label: ((p.t - throttleData[0].t) / 1000).toFixed(2) }));
 
   return (
     <SafeAreaView style={styles.detailsContainer}>
@@ -290,11 +267,15 @@ export default function LapsScreen() {
     <TouchableOpacity style={styles.listItem} onPress={() => setSelectedLap(item)}>
       <View style={styles.infoContainer}>
         <Text style={styles.listText}>
-          Rundenzeit: {item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s
+          {item.id}
         </Text>
         <Text style={styles.listText}>
-          Datum: {new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
+          {new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
         </Text>
+        <Text style={styles.listText}>
+          {item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s
+        </Text>
+
       </View>
       <TouchableOpacity style={styles.deleteButton} onPress={(e) => {
         e.stopPropagation(); // Prevent opening details
