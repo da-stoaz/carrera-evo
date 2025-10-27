@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import EventEmitter from 'events';
 import Paho from "paho-mqtt";
 
 // The Paho.Client instance
@@ -7,13 +8,15 @@ let client: Paho.Client | null = null;
 let host = 'localhost';
 const topic = "throttle";
 
+// Event emitter for status changes
+const statusEmitter = new EventEmitter();
+
 async function loadHost() {
   const storedHost = await AsyncStorage.getItem('mqtt_host');
   if (storedHost) {
     host = storedHost;
   }
 }
-
 
 // Queue to hold subscriptions requested before connection is established
 const subscriptionQueue: { topic: string, callback: (payload: string) => void }[] = [];
@@ -51,6 +54,7 @@ export async function initMqtt() {
     if (responseObject.errorCode !== 0) {
       console.log(`[MQTT] Connection lost: ${responseObject.errorMessage}`);
       // Implement a reconnect logic here if necessary
+      statusEmitter.emit('statusChange', false); // Emit disconnected
     }
   };
 
@@ -68,9 +72,11 @@ export async function initMqtt() {
       subscriptionQueue.length = 0; // Clear the queue
 
       client!.subscribe('test');
+      statusEmitter.emit('statusChange', true); // Emit connected
     },
     onFailure: (error) => {
-      console.error(error)
+      console.error(error);
+      statusEmitter.emit('statusChange', false); // Emit disconnected on failure
     },
     // userName: 'ubuntu',
     // password: 'Charge.1988',
@@ -83,11 +89,16 @@ export function disconnectMqtt() {
     try {
       client.disconnect();
       console.log('[MQTT] Disconnected.');
+      statusEmitter.emit('statusChange', false); // Emit disconnected
     } catch (e) {
       console.error('[MQTT] Error during disconnect:', e);
     }
   }
   client = null;
+}
+
+export function getConnectionStatus(){
+  return client ? client.isConnected() : false;
 }
 
 
@@ -162,3 +173,6 @@ export function subscribeToTopic(topic: string, callback: (payload: string) => v
     }
   });
 }
+
+// Export the emitter for hooks to listen
+export { statusEmitter };

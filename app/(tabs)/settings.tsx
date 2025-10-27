@@ -1,11 +1,14 @@
 // app/(tabs)/settings.tsx
+import { useMqttStatus } from '@/hooks/use-mqtt-status';
 import { setMqttHost } from '@/lib/mqttClient'; // Import the setter function
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
+  const isConnected = useMqttStatus();
   const [modalVisible, setModalVisible] = useState(false);
   const [host, setHost] = useState('localhost'); // Default host
   const [currentHost, setCurrentHost] = useState('localhost'); // For display
@@ -31,6 +34,10 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Einstellungen</Text>
+      <View style={styles.hostContainer}>
+        <Text>Verbindungsstatus: {isConnected ? 'Verbunden' : 'Getrennt'}</Text>
+        <MaterialCommunityIcons />
+      </View>
       <View style={styles.hostContainer}>
         <Text style={styles.hostText}>Aktueller MQTT Host: {currentHost}</Text>
         <TouchableOpacity style={styles.editButton} onPress={() => setModalVisible(true)}>
