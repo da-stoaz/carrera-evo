@@ -1,6 +1,6 @@
 import { publishThrottle } from '@/lib/mqttClient';
 import { calculateAverageGas, calculateLapTime, lttb } from "@/lib/utils";
-import { Lap, ThrottleDataPoint } from '@/types/types';
+import { Lap } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -18,24 +18,9 @@ export default function LapDetailsPage() {
   const [isReplaying, setIsReplaying] = useState(false);
   const [loop, setLoop] = useState(false);
   const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const startTimeRef = useRef(0);
   const currentIndexRef = useRef(0);
-
-  // Helper to re-create the sample logic
-  const getSampleLaps = async () => {
-    const throttlesample: ThrottleDataPoint[] = Array.from({ length: 10000 }, (_, i) => ({
-      t: i,
-      v: Math.round((Math.sin(i / 100) + 1) * 50)
-    }));
-    const laps: Lap[] = [
-      { id: 1, date: new Date("2025-10-15").getTime(), throttleData: throttlesample },
-      { id: 2, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(5000, 8888) },
-      { id: 3, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(444, 9330) },
-      { id: 4, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(3453, 10000) },
-      { id: 5, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(100, 8004) }
-    ];
-    return JSON.stringify(laps);
-  };
 
   // Load lap data based on the ID from the async storage (or sample data)
   useEffect(() => {
@@ -50,14 +35,7 @@ export default function LapDetailsPage() {
           if (selectedLap) {
             setLap(selectedLap);
           } else {
-            const sampleLapsJson = await getSampleLaps();
-            const sampleLaps: Lap[] = JSON.parse(sampleLapsJson);
-            const sampleLap = sampleLaps.find(l => l.id === lapId);
-            if (sampleLap) {
-              setLap(sampleLap);
-            } else {
-              router.back();
-            }
+            router.back();
           }
         }
       } catch (e) {
@@ -70,9 +48,9 @@ export default function LapDetailsPage() {
 
   const stopReplay = () => {
     setIsReplaying(false);
-    if (intervalRef.current) {
-      clearTimeout(intervalRef.current);
-      intervalRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
     setProgress(0);
   };
@@ -83,32 +61,37 @@ export default function LapDetailsPage() {
     setIsReplaying(true);
     setProgress(0);
     currentIndexRef.current = 0;
+    startTimeRef.current = performance.now();
     const throttleData = lap.throttleData;
+    const baseTime = throttleData[0].t;
 
-    const playStep = () => {
+    const playStep = (timestamp: number) => {
+      if (!isReplaying) return;
+
+      const elapsed = timestamp - startTimeRef.current;
+
+      while (currentIndexRef.current < throttleData.length && (throttleData[currentIndexRef.current].t - baseTime) <= elapsed) {
+        const point = throttleData[currentIndexRef.current];
+        publishThrottle(point.v);
+        currentIndexRef.current++;
+      }
+
+      setProgress(currentIndexRef.current / throttleData.length);
+
       if (currentIndexRef.current >= throttleData.length) {
         if (loop) {
           currentIndexRef.current = 0;
-          setProgress(0);
+          startTimeRef.current = performance.now();
+          rafRef.current = requestAnimationFrame(playStep);
         } else {
           stopReplay();
-          return;
         }
+      } else {
+        rafRef.current = requestAnimationFrame(playStep);
       }
-
-      const point = throttleData[currentIndexRef.current];
-      publishThrottle(point.v);
-      setProgress(currentIndexRef.current / throttleData.length);
-
-      currentIndexRef.current++;
-      const nextDelay = currentIndexRef.current < throttleData.length
-        ? throttleData[currentIndexRef.current].t - point.t
-        : 0;
-
-      intervalRef.current = setTimeout(playStep, nextDelay);
     };
 
-    playStep();
+    rafRef.current = requestAnimationFrame(playStep);
   };
 
   useEffect(() => {
@@ -124,7 +107,13 @@ export default function LapDetailsPage() {
     );
   }
 
-  const downsampledData = lttb(lap.throttleData, 500).map(p => ({ value: p.v, label: ((p.t - lap.throttleData[0].t) / 1000).toFixed(2) }));
+  console.log(lap.throttleData)
+
+  console.log("DOWNSAMPLE:")
+
+  console.log(lttb(lap.throttleData, 100))
+
+  const downsampledData = lttb(lap.throttleData, 100).map(p => ({ value: p.v, label: p.t }));
 
 
   return (
@@ -142,15 +131,14 @@ export default function LapDetailsPage() {
 
       <View style={styles.chartContainer}>
         <LineChart
-          {...({
-            data: downsampledData,
-            width: 300,
-            height: 200,
-            yAxisProps: { minValue: 0, maxValue: 100 },
-            color: 'blue',
-            thickness: 2,
-            curved: true,
-          } as any)}
+          data={downsampledData}
+          maxValue={100}
+          height={200}
+          width={300}
+          color={"blue"}
+          thickness={3}
+          curved={true}
+
         />
       </View>
 
