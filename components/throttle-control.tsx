@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f0f0f0',
+        marginTop: 50
     },
     sliderContainer: {
         width: 80,
@@ -139,6 +139,12 @@ const styles = StyleSheet.create({
         width: 80,
         backgroundColor: 'red',
         borderRadius: 40,
+        borderColor: '#e53935',
+        borderWidth: 2,
+        shadowColor: '#e53935',
+        shadowOpacity: 0.8,
+        shadowRadius: 8,
+        elevation: 6,
     },
     thumb: {
         position: 'absolute',
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 40,
         backgroundColor: '#fff',
-        borderColor: '#333',
+        borderColor: '#e53935',
         borderWidth: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -160,7 +166,7 @@ const styles = StyleSheet.create({
         left: 90,
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
     },
     voltageText: {
         position: 'absolute',
@@ -168,6 +174,6 @@ const styles = StyleSheet.create({
         left: -90, // Changed to left for better positioning on the left side; adjust as needed for spacing
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
+        color: 'white',
     },
 });

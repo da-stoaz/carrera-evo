@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { calculateLapTime } from '@/lib/utils';
 import { Lap } from '@/types/types';
@@ -73,10 +72,11 @@ export default function LapsScreen() {
     <TouchableOpacity
       style={styles.listItem}
       onPress={() => handleSelectLap(item)}
+      activeOpacity={0.6}
     >
       <View style={styles.infoContainer}>
         <Text style={styles.listText}>
-          {item.id}
+          {`Runde ${item.id}`}
         </Text>
         <Text style={styles.listText}>
           {new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
@@ -84,19 +84,28 @@ export default function LapsScreen() {
         <Text style={styles.listText}>
           {item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s
         </Text>
-
       </View>
-      <TouchableOpacity style={styles.deleteButton} onPress={(e) => {
-        e.stopPropagation();
-        handleDelete(item.id);
-      }}>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={(e) => {
+          e.stopPropagation();
+          handleDelete(item.id);
+        }}
+        activeOpacity={0.7}
+      >
         <Text style={styles.buttonText}>Löschen</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <ImageBackground
+      source={{ uri: 'https://wallpapers.com/images/hd/race-track-pictures-w4p4u0usrxl8bqii.jpg' }}
+      style={styles.background}
+      resizeMode="cover"
+      blurRadius={20}
+    >
+      <View style={styles.overlay} />
       <Stack.Screen options={{ title: 'Laps' }} />
       <View style={styles.container}>
         <Text style={styles.header}>Aufgezeichnete Runden</Text>
@@ -104,62 +113,90 @@ export default function LapsScreen() {
           data={laps}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={laps.length === 0 ? styles.emptyContainer : undefined}
           ListEmptyComponent={<Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>}
+          showsVerticalScrollIndicator={false}
         />
       </View>
-    </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  // ... (Keep existing styles)
+  background: {
+    flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 24,
+    marginTop: 54,
     textAlign: 'center',
+    color: '#fefefe',
+    fontFamily: 'System',
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: 'white',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    marginBottom: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8,
   },
   infoContainer: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    gap: 6,
   },
   listText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 17,
+    color: '#fefefe',
+    fontWeight: '500',
+    flexWrap: 'wrap',
+    fontFamily: 'System',
   },
   deleteButton: {
-    backgroundColor: 'red',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 4,
+    backgroundColor: '#e53935',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 80,
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 16,
+    fontFamily: 'System',
   },
   emptyText: {
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 40,
     fontSize: 18,
-    color: '#666',
+    color: '#fefefe',
+    fontFamily: 'System',
+  },
+  emptyContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
 });

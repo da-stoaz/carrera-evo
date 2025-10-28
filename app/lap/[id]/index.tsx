@@ -4,10 +4,12 @@ import { Lap } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ImageBackground, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from 'react-native-progress';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const backgroundImage = { uri: 'https://wallpapers.com/images/hd/race-track-pictures-w4p4u0usrxl8bqii.jpg' };
 
 export default function LapDetailsPage() {
   const router = useRouter();
@@ -101,123 +103,177 @@ export default function LapDetailsPage() {
 
   if (!lap) {
     return (
-      <SafeAreaView style={styles.detailsContainer}>
-        <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
-      </SafeAreaView>
+      <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
+        <View style={styles.overlay} />
+        <SafeAreaView style={[styles.detailsContainer, styles.glassContainer]}>
+          <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
+        </SafeAreaView>
+      </ImageBackground>
     );
   }
 
-  console.log(lap.throttleData)
-
-  console.log("DOWNSAMPLE:")
-
-  console.log(lttb(lap.throttleData, 100))
-
-  const downsampledData = lttb(lap.throttleData, 100).map(p => ({ value: p.v, label: p.t }));
-
+  const downsampledData = lttb(lap.throttleData, 100).map(p => ({ value: p.v, label: p.t.toString() }));
 
   return (
-    <SafeAreaView style={styles.detailsContainer}>
-      <Stack.Screen
-        options={{
-          title: `Rundendetails ${lapId}`,
-          headerBackTitle: 'Laps',
-        }}
-      />
-      <Text style={styles.modalTitle}>Rundendetails</Text>
-      <Text>Durchschnittliche Gasposition: {calculateAverageGas(lap.throttleData)}%</Text>
-      <Text>Timestamp der Aufzeichnung: {new Date(lap.date).toLocaleString('de-DE')}</Text>
-      <Text>Rundenzeit: {lap.lapTime !== undefined ? lap.lapTime.toFixed(2) : calculateLapTime(lap.throttleData)}s</Text>
-
-      <View style={styles.chartContainer}>
-        <LineChart
-          data={downsampledData}
-          maxValue={100}
-          height={200}
-          width={300}
-          color={"blue"}
-          thickness={3}
-          curved={true}
-
+    <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
+      <View style={styles.overlay} />
+      <SafeAreaView style={styles.safeArea}>
+        <Stack.Screen
+          options={{
+            title: `Rundendetails ${lapId}`,
+            headerBackTitle: 'Laps',
+            headerStyle: { backgroundColor: 'transparent' },
+            headerTintColor: '#fefefe',
+            headerTitleStyle: { fontWeight: 'bold' },
+            headerTransparent: true,
+          }}
         />
-      </View>
+        <View style={[styles.detailsContainer, styles.glassContainer]}>
+          <Text style={styles.modalTitle}>Rundendetails</Text>
+          <Text style={styles.label}>Durchschnittliche Gasposition: <Text style={styles.value}>{calculateAverageGas(lap.throttleData)}%</Text></Text>
+          <Text style={styles.label}>Timestamp der Aufzeichnung: <Text style={styles.value}>{new Date(lap.date).toLocaleString('de-DE')}</Text></Text>
+          <Text style={styles.label}>Rundenzeit: <Text style={styles.value}>{lap.lapTime !== undefined ? lap.lapTime.toFixed(2) : calculateLapTime(lap.throttleData)}s</Text></Text>
 
-      <View style={styles.replayContainer}>
-        <View style={
-          {
-            alignItems: 'center',
-            flex: 1,
-            flexDirection: 'row'
-          }
-        }>
-          <Text>Loop:</Text>
-          <Switch value={loop} onValueChange={setLoop} />
+          <View style={[styles.chartContainer, styles.glassBlur]}>
+            <LineChart
+              data={downsampledData}
+              maxValue={100}
+              height={250}
+              width={Dimensions.get('window').width}
+              color={"white"}
+              thickness={3}
+              curved={true}
+              backgroundColor="transparent"
+              hideRules={true}
+              hideAxesAndRules={true}
+              yAxisColor="transparent"
+              xAxisColor="transparent"
+            />
+          </View>
+
+          <View style={[styles.replayContainer]}>
+            <View style={styles.loopContainer}>
+              <View style={{flexDirection: 'column'}}>
+                <Text style={styles.label}>Loop</Text>
+                <Switch value={loop} onValueChange={setLoop} thumbColor={loop ? "white" : "white"} trackColor={{ false: "white", true: "red" }} style={{marginTop: 6}} />
+              </View>
+            </View>
+
+            {!isReplaying ? (
+              <TouchableOpacity style={styles.replayButton} onPress={startReplay} activeOpacity={0.8}>
+                <Text style={styles.buttonText}>Abspielen</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.cancelButton} onPress={stopReplay} activeOpacity={0.8}>
+                <Text style={styles.buttonText}>Abbrechen</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {isReplaying && (
+            <Progress.Bar progress={progress} width={Dimensions.get('window').width - 40} color="#e53935" borderRadius={10} unfilledColor="rgba(255,255,255,0.3)" borderWidth={0} />
+          )}
         </View>
-
-        {!isReplaying ? (
-          <TouchableOpacity style={styles.replayButton} onPress={startReplay}>
-            <Text style={styles.buttonText}>Abspielen</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.cancelButton} onPress={stopReplay}>
-            <Text style={styles.buttonText}>Abbrechen</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {isReplaying && (
-        <Progress.Bar progress={progress} width={300} color="green" />
-      )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  detailsContainer: {
+  background: {
     flex: 1,
-    padding: 16,
-    backgroundColor: 'white',
-    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+  },
+  detailsContainer: {
+    borderRadius: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 25,
+  },
+  glassContainer: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  glassBlur: {
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
+    marginVertical: 20,
+    padding: 10,
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#fefefe',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 18,
+    color: '#fefefe',
+    marginBottom: 8,
+  },
+  value: {
+    fontWeight: '600',
   },
   chartContainer: {
-    marginVertical: 20,
+    alignSelf: 'center',
+    width: "115%",
+    overflow:"hidden"
   },
   replayContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  loopContainer: {
+    alignItems: 'flex-start',
   },
   replayButton: {
-    backgroundColor: '#2196F3',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: 'red',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
     marginLeft: 16,
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: 'red',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: '#e53935',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
     marginLeft: 16,
-  },
-  closeButton: {
-    marginTop: 24,
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 6,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#fefefe',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });
