@@ -100,10 +100,8 @@ export default function ThrottleControl() {
                 {/* Track Fill */}
                 <Animated.View style={[styles.trackFill, trackFillStyle]} />
 
-
-
                 {/* Throttle Value Display */}
-                <Text style={styles.valueText}>{throttleValue.toFixed(0)}%</Text>
+                <Text style={styles.valueText}>{throttleValue !== 100 ? throttleValue.toFixed(1) : throttleValue}%</Text>
 
                 {/* Voltage Display (on the other side) */}
                 <Text style={styles.voltageText}>{voltage.toFixed(1)}V</Text>
@@ -163,7 +161,7 @@ const styles = StyleSheet.create({
     valueText: {
         position: 'absolute',
         top: 20,
-        left: 90,
+        left: 95,
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
