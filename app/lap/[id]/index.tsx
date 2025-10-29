@@ -1,3 +1,4 @@
+import { Images } from '@/assets';
 import { publishThrottle } from '@/lib/mqttClient';
 import { calculateAverageGas, calculateLapTime } from "@/lib/utils";
 import { Lap } from '@/types/types';
@@ -7,10 +8,7 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ImageBackground, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import * as Progress from 'react-native-progress';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LapChart from './LapChart';
-
-const backgroundImage = { uri: 'https://wallpapers.com/images/hd/race-track-pictures-w4p4u0usrxl8bqii.jpg' };
 
 export default function LapDetailsPage() {
   const router = useRouter();
@@ -26,9 +24,7 @@ export default function LapDetailsPage() {
   const startTimeRef = useRef(0);
   const currentIndexRef = useRef(0);
 
-  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const contentTopPadding = headerHeight + insets.top;
 
   useLayoutEffect(() => {
     if (lapId != null) {
@@ -118,9 +114,9 @@ export default function LapDetailsPage() {
 
   if (!lap) {
     return (
-      <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
+      <ImageBackground source={Images.raceTrack} style={styles.background} resizeMode="cover" blurRadius={5}>
         <View style={styles.overlay} />
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: contentTopPadding }}>
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 0 }}>
           <View style={[styles.detailsContainer, styles.glassContainer]}>
             <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
           </View>
@@ -130,12 +126,11 @@ export default function LapDetailsPage() {
   }
 
   return (
-    <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
+    <ImageBackground source={Images.raceTrack} style={styles.background} resizeMode="cover" blurRadius={5}>
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: insets.bottom,
-          paddingTop: contentTopPadding - 75,
+          paddingTop: headerHeight,
           paddingHorizontal: 20,
         }}
         style={styles.fullScreenScroll}

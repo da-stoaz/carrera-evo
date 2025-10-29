@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { Images } from '@/assets';
 import { calculateLapTime } from '@/lib/utils';
 import { Lap } from '@/types/types';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -55,7 +56,7 @@ export default function LapsScreen() {
   };
 
   const handleDelete = (id: number) => {
-    Alert.alert('Löschen', 'Sind Sie sicher?', [
+    Alert.alert(`Runde ${id} Löschen?`, 'Eine wiederherstellung ist nicht möglich.', [
       { text: 'Abbrechen', style: 'cancel' },
       {
         text: 'Löschen', onPress: () => {
@@ -103,7 +104,7 @@ export default function LapsScreen() {
 
   return (
     <ImageBackground
-      source={{ uri: 'https://wallpapers.com/images/hd/race-track-pictures-w4p4u0usrxl8bqii.jpg' }}
+      source={Images.raceTrack}
       style={styles.background}
       resizeMode="cover"
       blurRadius={20}
@@ -135,15 +136,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 24,
-    marginTop: 54,
-    textAlign: 'center',
-    color: '#fefefe',
-    fontFamily: 'System',
   },
   listItem: {
     flexDirection: 'row',

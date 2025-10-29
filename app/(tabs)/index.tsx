@@ -1,13 +1,13 @@
+import { Images } from '@/assets';
 import ThrottleControl from '@/components/throttle-control';
 import { disconnectMqtt, initMqtt, subscribeToTopic } from '@/lib/mqttClient';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect } from 'react';
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 function handleLightGateTriggered(payload: string) {
-    console.log(`Status update received: ${payload}`);
+  console.log(`Status update received: ${payload}`);
 }
 
 export default function HomeScreen() {
@@ -26,12 +26,12 @@ export default function HomeScreen() {
 
   return (
     <ImageBackground
-      source={{ uri: 'https://wallpapers.com/images/hd/race-track-pictures-w4p4u0usrxl8bqii.jpg' }}
+      source={Images.raceTrack}
       style={styles.background}
       blurRadius={40}
     >
       <View style={styles.overlay} />
-      <SafeAreaView style={[styles.container, {marginTop: headerHeight}]}>
+      <View style={[styles.container, { paddingTop: headerHeight + 20 }]}>
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.recordButton}
@@ -39,13 +39,10 @@ export default function HomeScreen() {
             // handle button press
           }}
         >
-          <Text style={styles.recordButtonText}>Record Lap</Text>
+          <Text style={styles.recordButtonText}>Runde Aufzeichnen</Text>
         </TouchableOpacity>
-
-
-          <ThrottleControl/>
-    
-      </SafeAreaView>
+        <ThrottleControl />
+      </View>
     </ImageBackground>
   );
 }

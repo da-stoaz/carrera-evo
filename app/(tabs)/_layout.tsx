@@ -22,20 +22,21 @@ export default function TabLayout() {
         options={{
           title: 'Carrera Throttle Control',
           tabBarLabel: "Drive",
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="speedometer-outline" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="laps"
         options={{
-          title: 'Laps',
+          title: 'Aufgezeichnete Runden',
+          tabBarLabel: "Runden",
           tabBarIcon: ({ color }) => <Ionicons name="timer" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: 'Einstellungen',
           headerTintColor: '#000000',
           tabBarIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} />,
         }}
