@@ -17,8 +17,12 @@ export default function LapChart({ throttleData }: LapChartProps) {
   }));
 
   const screenWidth = Dimensions.get('window').width;
-  const padH = 20 * 2; // same padding as parent
-  const containerWidth = screenWidth - padH;
+  const padH = 30 * 2; // same padding as parent
+  const initialSpacing = 4;
+  const endSpacing = 20;
+  const chartWidth = screenWidth - padH;
+  const spacing = downsampledData.length > 1 ? (chartWidth - initialSpacing - endSpacing) / (downsampledData.length - 1) : 0;
+
 
   return (
     <View style={[styles.chartContainer, styles.glassBlur]}>
@@ -26,8 +30,9 @@ export default function LapChart({ throttleData }: LapChartProps) {
         data={downsampledData}
         maxValue={100}
         height={250}
-        width={containerWidth}
-        endSpacing={0}
+        initialSpacing={initialSpacing}
+        spacing={spacing}
+        endSpacing={endSpacing}
         color="white"
         thickness={3}
         overScrollMode="never"
