@@ -2,7 +2,7 @@ import { publishThrottle } from '@/lib/mqttClient';
 import { calculateAverageGas, calculateLapTime, lttb } from "@/lib/utils";
 import { Lap } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Dimensions, ImageBackground, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
@@ -26,7 +26,10 @@ export default function LapDetailsPage() {
 
   // Load lap data based on the ID from the async storage (or sample data)
   useEffect(() => {
-    if (lapId === null) return;
+    if (lapId === null || isNaN(lapId)) {
+      router.back(); // Invalid ID, go back early
+      return;
+    }
 
     const loadLap = async () => {
       try {
@@ -39,6 +42,8 @@ export default function LapDetailsPage() {
           } else {
             router.back();
           }
+        } else {
+          router.back();
         }
       } catch (e) {
         console.error('Failed to load lap', e);
@@ -118,16 +123,6 @@ export default function LapDetailsPage() {
     <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
       <View style={styles.overlay} />
       <SafeAreaView style={styles.safeArea}>
-        <Stack.Screen
-          options={{
-            title: `Rundendetails ${lapId}`,
-            headerBackTitle: 'Laps',
-            headerStyle: { backgroundColor: 'transparent' },
-            headerTintColor: '#fefefe',
-            headerTitleStyle: { fontWeight: 'bold' },
-            headerTransparent: true,
-          }}
-        />
         <View style={[styles.detailsContainer, styles.glassContainer]}>
           <Text style={styles.modalTitle}>Rundendetails</Text>
           <Text style={styles.label}>Durchschnittliche Gasposition: <Text style={styles.value}>{calculateAverageGas(lap.throttleData)}%</Text></Text>
@@ -153,9 +148,9 @@ export default function LapDetailsPage() {
 
           <View style={[styles.replayContainer]}>
             <View style={styles.loopContainer}>
-              <View style={{flexDirection: 'column'}}>
+              <View style={{ flexDirection: 'column' }}>
                 <Text style={styles.label}>Loop</Text>
-                <Switch value={loop} onValueChange={setLoop} thumbColor={loop ? "white" : "white"} trackColor={{ false: "white", true: "red" }} style={{marginTop: 6}} />
+                <Switch value={loop} onValueChange={setLoop} thumbColor={loop ? "white" : "white"} trackColor={{ false: "white", true: "red" }} style={{ marginTop: 6 }} />
               </View>
             </View>
 
@@ -178,7 +173,6 @@ export default function LapDetailsPage() {
     </ImageBackground>
   );
 }
-
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -191,7 +185,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 50,
   },
   detailsContainer: {
     borderRadius: 20,
@@ -239,7 +232,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignSelf: 'center',
     width: "115%",
-    overflow:"hidden"
+    overflow: "hidden"
   },
   replayContainer: {
     flexDirection: 'row',

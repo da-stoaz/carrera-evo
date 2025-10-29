@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -37,6 +37,7 @@ export default function LapsScreen() {
           { id: 5, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(100, 8004) }
         ];
         setLaps(initialLaps);
+        saveLaps(initialLaps);
       }
     } catch (e) {
       console.error('Failed to load laps', e);
@@ -106,7 +107,6 @@ export default function LapsScreen() {
       blurRadius={20}
     >
       <View style={styles.overlay} />
-      <Stack.Screen options={{ title: 'Laps' }} />
       <View style={styles.container}>
         <Text style={styles.header}>Aufgezeichnete Runden</Text>
         <FlatList<Lap>
