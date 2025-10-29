@@ -2,8 +2,8 @@ import { publishThrottle } from '@/lib/mqttClient';
 import { calculateAverageGas, calculateLapTime, lttb } from "@/lib/utils";
 import { Lap } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from 'expo-router'; // Removed useLayoutEffect
-import { useEffect, useRef, useState } from 'react'; // Added useLayoutEffect here
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'; // Removed useLayoutEffect
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'; // Added useLayoutEffect here
 import { Dimensions, ImageBackground, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from 'react-native-progress';
@@ -16,6 +16,7 @@ const backgroundImage = { uri: 'https://wallpapers.com/images/hd/race-track-pict
 
 export default function LapDetailsPage() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { id } = useLocalSearchParams();
   const lapId = typeof id === 'string' ? parseInt(id, 10) : null;
 
@@ -31,7 +32,13 @@ export default function LapDetailsPage() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   // This value is the total height that the content must be offset from the top
-  const contentTopPadding = headerHeight + insets.top; 
+  const contentTopPadding = headerHeight + insets.top;
+
+  useLayoutEffect(() => {
+    if (lapId != null) {
+      navigation.setOptions({ title: `Rundendetails ${lapId}` });
+    }
+  }, [navigation, lapId]);
 
 
   // Load lap data based on the ID from the async storage (or sample data)
@@ -44,17 +51,17 @@ export default function LapDetailsPage() {
     const loadLap = async () => {
       try {
         const json = await AsyncStorage.getItem('laps');
-        if (json) {
-          const laps: Lap[] = JSON.parse(json);
-          const selectedLap = laps.find(l => l.id === lapId);
-          if (selectedLap) {
-            setLap(selectedLap);
-          } else {
-            router.back();
-          }
-        } else {
+        if (!json) {
           router.back();
+          return;
         }
+        const laps: Lap[] = JSON.parse(json);
+        const selectedLap = laps.find(l => l.id === lapId);
+        if (!selectedLap) {
+          router.back();
+          return;
+        }
+        setLap(selectedLap)
       } catch (e) {
         console.error('Failed to load lap', e);
         router.back();
@@ -120,7 +127,6 @@ export default function LapDetailsPage() {
     return (
       <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
         <View style={styles.overlay} />
-        {/* Apply padding to the loading view if needed */}
         <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: contentTopPadding }}>
           <View style={[styles.detailsContainer, styles.glassContainer]}>
             <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
@@ -132,14 +138,18 @@ export default function LapDetailsPage() {
 
   const downsampledData = lttb(lap.throttleData, 100).map(p => ({ value: p.v, label: p.t.toString() }));
 
+
+  const screenWidth = Dimensions.get('window').width;
+  const padH = 20 * 2;
+  const containerWidth = screenWidth - padH;
+
   return (
     <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
       <View style={styles.overlay} />
-      {/* Apply the calculated padding to the ScrollView content container */}
       <ScrollView
-        contentContainerStyle={{ 
+        contentContainerStyle={{
           paddingBottom: insets.bottom, // Add bottom safe area and margin
-          paddingTop: contentTopPadding -50, // Calculated padding to clear header
+          paddingTop: contentTopPadding - 75, 
           paddingHorizontal: 20,
         }}
         style={styles.fullScreenScroll}
@@ -154,15 +164,19 @@ export default function LapDetailsPage() {
               data={downsampledData}
               maxValue={100}
               height={250}
-              width={Dimensions.get('window').width - 80}
+              width={containerWidth}
+              endSpacing={0}
               color={"white"}
               thickness={3}
+              overScrollMode='never'
+              adjustToWidth={true}
               curved={true}
               backgroundColor="transparent"
               hideRules={true}
-              hideAxesAndRules={true}
               yAxisColor="transparent"
-              xAxisColor="transparent"
+              xAxisThickness={0}
+              hideDataPoints
+              xAxisLabelTextStyle={{ display: "none" }}
             />
           </View>
 
@@ -186,7 +200,7 @@ export default function LapDetailsPage() {
           </View>
 
           {isReplaying && (
-            <Progress.Bar progress={progress} width={"full"} color="#e53935" borderRadius={10} unfilledColor="rgba(255,255,255,0.3)" borderWidth={0} />
+            <Progress.Bar progress={progress} width={null} color="#e53935" borderRadius={10} unfilledColor="rgba(255,255,255,0.3)" borderWidth={0} />
           )}
         </View>
       </ScrollView>
@@ -210,10 +224,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 30,
     paddingHorizontal: 25,
-    marginBottom: 20, 
+    marginBottom: 20,
   },
   glassContainer: {
-    
+
   },
   glassBlur: {
     borderRadius: 18,
@@ -245,7 +259,7 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignSelf: 'center',
-    overflow: "hidden"
+    overflow: "hidden",
   },
   replayContainer: {
     flexDirection: 'row',
