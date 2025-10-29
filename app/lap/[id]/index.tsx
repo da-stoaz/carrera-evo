@@ -2,12 +2,15 @@ import { publishThrottle } from '@/lib/mqttClient';
 import { calculateAverageGas, calculateLapTime, lttb } from "@/lib/utils";
 import { Lap } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Dimensions, ImageBackground, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router'; // Removed useLayoutEffect
+import { useEffect, useRef, useState } from 'react'; // Added useLayoutEffect here
+import { Dimensions, ImageBackground, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import * as Progress from 'react-native-progress';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// Required for padding calculation
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 const backgroundImage = { uri: 'https://wallpapers.com/images/hd/race-track-pictures-w4p4u0usrxl8bqii.jpg' };
 
@@ -23,6 +26,13 @@ export default function LapDetailsPage() {
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef(0);
   const currentIndexRef = useRef(0);
+
+  // CRITICAL: Get the combined height of the status bar and the transparent header
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  // This value is the total height that the content must be offset from the top
+  const contentTopPadding = headerHeight + insets.top; 
+
 
   // Load lap data based on the ID from the async storage (or sample data)
   useEffect(() => {
@@ -110,9 +120,12 @@ export default function LapDetailsPage() {
     return (
       <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
         <View style={styles.overlay} />
-        <SafeAreaView style={[styles.detailsContainer, styles.glassContainer]}>
-          <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
-        </SafeAreaView>
+        {/* Apply padding to the loading view if needed */}
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: contentTopPadding }}>
+          <View style={[styles.detailsContainer, styles.glassContainer]}>
+            <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
+          </View>
+        </View>
       </ImageBackground>
     );
   }
@@ -122,11 +135,18 @@ export default function LapDetailsPage() {
   return (
     <ImageBackground source={backgroundImage} style={styles.background} resizeMode="cover" blurRadius={5}>
       <View style={styles.overlay} />
-      <SafeAreaView style={styles.safeArea}>
+      {/* Apply the calculated padding to the ScrollView content container */}
+      <ScrollView
+        contentContainerStyle={{ 
+          paddingBottom: insets.bottom, // Add bottom safe area and margin
+          paddingTop: contentTopPadding -50, // Calculated padding to clear header
+          paddingHorizontal: 20,
+        }}
+        style={styles.fullScreenScroll}
+      >
         <View style={[styles.detailsContainer, styles.glassContainer]}>
-          <Text style={styles.modalTitle}>Rundendetails</Text>
           <Text style={styles.label}>Durchschnittliche Gasposition: <Text style={styles.value}>{calculateAverageGas(lap.throttleData)}%</Text></Text>
-          <Text style={styles.label}>Timestamp der Aufzeichnung: <Text style={styles.value}>{new Date(lap.date).toLocaleString('de-DE')}</Text></Text>
+          <Text style={styles.label}>Datum: <Text style={styles.value}>{new Date(lap.date).toLocaleString('de-DE')}</Text></Text>
           <Text style={styles.label}>Rundenzeit: <Text style={styles.value}>{lap.lapTime !== undefined ? lap.lapTime.toFixed(2) : calculateLapTime(lap.throttleData)}s</Text></Text>
 
           <View style={[styles.chartContainer, styles.glassBlur]}>
@@ -134,7 +154,7 @@ export default function LapDetailsPage() {
               data={downsampledData}
               maxValue={100}
               height={250}
-              width={Dimensions.get('window').width}
+              width={Dimensions.get('window').width - 80}
               color={"white"}
               thickness={3}
               curved={true}
@@ -166,13 +186,14 @@ export default function LapDetailsPage() {
           </View>
 
           {isReplaying && (
-            <Progress.Bar progress={progress} width={Dimensions.get('window').width - 40} color="#e53935" borderRadius={10} unfilledColor="rgba(255,255,255,0.3)" borderWidth={0} />
+            <Progress.Bar progress={progress} width={"full"} color="#e53935" borderRadius={10} unfilledColor="rgba(255,255,255,0.3)" borderWidth={0} />
           )}
         </View>
-      </SafeAreaView>
+      </ScrollView>
     </ImageBackground>
   );
 }
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -182,24 +203,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  safeArea: {
+  fullScreenScroll: {
     flex: 1,
-    paddingHorizontal: 20,
   },
   detailsContainer: {
     borderRadius: 20,
     paddingVertical: 30,
     paddingHorizontal: 25,
+    marginBottom: 20, 
   },
   glassContainer: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderColor: 'rgba(255,255,255,0.3)',
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    
   },
   glassBlur: {
     borderRadius: 18,
@@ -231,7 +245,6 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignSelf: 'center',
-    width: "115%",
     overflow: "hidden"
   },
   replayContainer: {

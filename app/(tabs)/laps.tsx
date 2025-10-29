@@ -5,16 +5,18 @@ import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, V
 
 import { calculateLapTime } from '@/lib/utils';
 import { Lap } from '@/types/types';
+import { useHeaderHeight } from '@react-navigation/elements';
 
 
 
 export default function LapsScreen() {
+  const headerHeight = useHeaderHeight();
   const router = useRouter();
   const [laps, setLaps] = useState<Lap[]>([]);
 
   useEffect(() => {
     loadLaps();
-  }, []);
+  }, );
 
   const loadLaps = async () => {
     const throttlesample = Array.from({ length: 10000 }, (_, i) => ({
@@ -108,12 +110,11 @@ export default function LapsScreen() {
     >
       <View style={styles.overlay} />
       <View style={styles.container}>
-        <Text style={styles.header}>Aufgezeichnete Runden</Text>
         <FlatList<Lap>
           data={laps}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={laps.length === 0 ? styles.emptyContainer : undefined}
+          contentContainerStyle={laps.length === 0 ? styles.emptyContainer : {paddingTop: headerHeight}}
           ListEmptyComponent={<Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>}
           showsVerticalScrollIndicator={false}
         />

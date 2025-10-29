@@ -1,5 +1,6 @@
 import ThrottleControl from '@/components/throttle-control';
 import { disconnectMqtt, initMqtt, subscribeToTopic } from '@/lib/mqttClient';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect } from 'react';
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +11,7 @@ function handleLightGateTriggered(payload: string) {
 }
 
 export default function HomeScreen() {
+  const headerHeight = useHeaderHeight()
 
   useEffect(() => {
     initMqtt();
@@ -29,8 +31,7 @@ export default function HomeScreen() {
       blurRadius={40}
     >
       <View style={styles.overlay} />
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.header}>Carrera Throttle Control</Text>
+      <SafeAreaView style={[styles.container, {marginTop: headerHeight}]}>
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.recordButton}

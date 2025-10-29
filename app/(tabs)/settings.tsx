@@ -1,20 +1,21 @@
 // app/(tabs)/settings.tsx
 import { useMqttStatus } from '@/hooks/use-mqtt-status';
 import { setMqttHost } from '@/lib/mqttClient'; // Import the setter function
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useHeaderHeight } from '@react-navigation/elements';
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
+  const headerHeight = useHeaderHeight();
   const isConnected = useMqttStatus();
   const [modalVisible, setModalVisible] = useState(false);
   const [host, setHost] = useState('localhost'); // Default host
   const [currentHost, setCurrentHost] = useState('localhost'); // For display
 
   useEffect(() => {
-    // Load the current host from storage on mount
     const loadCurrentHost = async () => {
       const storedHost = await AsyncStorage.getItem('mqtt_host');
       if (storedHost) {
@@ -32,14 +33,22 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Einstellungen</Text>
+    <SafeAreaView style={{ paddingTop: headerHeight }}>
       <View style={styles.hostContainer}>
-        <Text>Verbindungsstatus: {isConnected ? 'Verbunden' : 'Getrennt'}</Text>
-        <MaterialCommunityIcons />
+        <Text style={styles.hostText}>Verbindungsstatus:</Text>
+        {isConnected ?
+          <View style={{ flex: 1, flexDirection: "row", alignItems: 'center', gap: 4, }}>
+            <Ionicons color={"green"} name="checkmark-circle-outline" size={20} />
+            <Text>Verbunden</Text>
+          </View>
+          :
+          <View style={{ flex: 1, flexDirection: "row", alignItems: 'center', gap: 4 }}>
+            <Ionicons color={"red"} name="close-circle-outline" size={20} />
+            <Text>Getrennt</Text>
+          </View>}
       </View>
       <View style={styles.hostContainer}>
-        <Text style={styles.hostText}>Aktueller MQTT Host: {currentHost}</Text>
+        <Text style={styles.hostText}>MQTT Host: {currentHost}</Text>
         <TouchableOpacity style={styles.editButton} onPress={() => setModalVisible(true)}>
           <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
@@ -78,19 +87,9 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 32,
-  },
+
   hostContainer: {
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,

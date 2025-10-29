@@ -12,30 +12,32 @@ export default function RootLayout() {
         <SafeAreaProvider>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                 <GestureHandlerRootView style={{ flex: 1 }}>
-                    <Stack screenOptions={{ headerShown: true }}>
-                        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                        {/* CRITICAL FIX: Reverting to explicit definition of lap/[id] to ensure the 
-                          header and back button work correctly when navigating from the tabs.
-                          
-                          NOTE: To avoid the DUAL HEADER issue, you MUST delete or empty your 
-                          'app/lap/_layout.tsx' file. This is now the only file defining the lap header.
-                        */}
+                    <Stack screenOptions={{
+                        headerStyle: { backgroundColor: 'transparent' },
+                        headerTintColor: '#fefefe',
+                        headerTitleStyle: { fontWeight: 'bold' },
+                        headerTransparent: true,
+                        headerBlurEffect: "none",
+                    }}>
+                        <Stack.Screen name="(tabs)" options={{
+                            headerShown: false
+                        }} />
                         <Stack.Screen
                             name="lap/[id]/index"
                             options={{
                                 title: 'Rundendetails ', // Dynamic title is best set inside the screen using useLayoutEffect
                                 headerBackTitle: 'Laps',
-                                headerStyle: { backgroundColor: 'transparent' },
-                                headerTitleStyle: { fontWeight: 'bold' },
+                                headerStyle: { backgroundColor: 'transparent', },
+                                headerTitleStyle: { fontWeight: 'bold', fontSize: 24 },
                                 headerTransparent: true,
-                                headerTintColor: '#fefefe', 
+                                headerTintColor: '#fefefe',
                                 headerBlurEffect: "none",
                             }}
                         />
                         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
                     </Stack>
                     {/* Setting StatusBar style to reflect the dark background of the detail page */}
-                    <StatusBar style="light" />
+                    <StatusBar style="auto" />
                 </GestureHandlerRootView>
             </ThemeProvider>
         </SafeAreaProvider>

@@ -7,13 +7,21 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: 'red',
-        headerShown: false,
+        headerStyle: { backgroundColor: 'transparent', },
+        headerTitleStyle: { fontWeight: 'bold', fontSize: 24 },
+        tabBarStyle: {
+
+        },
+        headerTransparent: true,
+        headerTintColor: '#fefefe',
       }}
     >
+
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Carrera Throttle Control',
+          tabBarLabel: "Drive",
           tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
         }}
       />
@@ -28,6 +36,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          headerTintColor: '#000000',
           tabBarIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} />,
         }}
       />
