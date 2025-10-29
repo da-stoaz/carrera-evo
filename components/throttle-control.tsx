@@ -5,10 +5,10 @@ import { Gesture, GestureDetector, GestureStateChangeEvent, GestureUpdateEvent, 
 import Animated, {
     Extrapolation,
     interpolate,
-    runOnJS,
     useAnimatedStyle,
     useSharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from "react-native-worklets";
 
 // Define the dimensions and range
 const SLIDER_HEIGHT = Dimensions.get('window').height * 0.6; // 60% of screen height
@@ -68,7 +68,7 @@ export default function ThrottleControl() {
 
             // Calculate throttle percentage and publish it
             const value = getThrottleValue(positionY.value);
-            runOnJS(publishThrottle)(value);
+            scheduleOnRN(publishThrottle, value);
         })
         .onEnd(() => {
             'worklet';
@@ -76,7 +76,7 @@ export default function ThrottleControl() {
             positionY.value = SLIDER_HEIGHT - THUMB_RADIUS; // Visual snap back to the bottom (0%)
 
             // Send 0% command on the JS thread
-            runOnJS(publishThrottle)(THROTTLE_MIN);
+            scheduleOnRN(publishThrottle, THROTTLE_MIN);
         });
 
     // Animated styles
