@@ -1,8 +1,9 @@
 import { Images } from '@/assets';
 import ThrottleControl from '@/components/throttle-control';
-import { disconnectMqtt, initMqtt, subscribeToTopic } from '@/lib/mqttClient';
+import { useThrottleRecorder } from '@/hooks/useThrottleRecorder';
+import { disconnectMqtt, initMqtt, publishThrottle, subscribeToTopic } from '@/lib/mqttClient';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
@@ -12,6 +13,20 @@ function handleLightGateTriggered(payload: string) {
 
 export default function HomeScreen() {
   const headerHeight = useHeaderHeight()
+  const { isRecording, data, start, stop, addSample } = useThrottleRecorder();
+  const [throttleValue, setThrottleValue] = useState(0);
+  // TODO: In the future, replace this calculation with real voltage data subscribed from the MQTT broker
+  const voltage = (throttleValue / 100) * 15;
+
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      const final = stop();
+      console.log('Lap finished –', JSON.stringify(final, null, 2));
+    } else {
+      start();
+    }
+  };
 
   useEffect(() => {
     initMqtt();
@@ -35,13 +50,25 @@ export default function HomeScreen() {
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.recordButton}
-          onPress={() => {
-            // handle button press
-          }}
+          onPress={toggleRecording}
         >
-          <Text style={styles.recordButtonText}>Runde Aufzeichnen</Text>
+          <Text style={styles.recordButtonText}>
+            {!isRecording ? "Runde Aufzeichnen" : "Aufzeichnung beenden"}
+          </Text>
         </TouchableOpacity>
-        <ThrottleControl />
+        <View style={styles.throttleContainer}>
+
+          <Text style={styles.valueText}>{throttleValue !== 100 ? throttleValue.toFixed(1) : throttleValue}%</Text>
+          <ThrottleControl onThrottleChange={(throttle) => {
+            setThrottleValue(throttle)
+            console.log(throttle)
+            publishThrottle(throttle)
+            if (isRecording) addSample(throttle)
+          }} />
+
+          <Text style={styles.voltageText}>{voltage.toFixed(1)}V</Text>
+        </View>
+
       </View>
     </ImageBackground>
   );
@@ -80,6 +107,12 @@ const styles = StyleSheet.create({
     minWidth: 150,
     elevation: 3,
   },
+  throttleContainer: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: 'center',
+    gap: 10
+  },
   recordButtonText: {
     color: '#fff',
     fontSize: 18,
@@ -98,5 +131,18 @@ const styles = StyleSheet.create({
   },
   throttleTextPercentVolt: {
     color: '#e53935',
+  },
+  valueText: {
+    flex: 1,
+    textAlign: "right",
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  voltageText: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
   },
 })

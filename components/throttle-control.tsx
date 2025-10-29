@@ -1,6 +1,5 @@
-import { useMqtt } from '@/hooks/use-mqtt';
-import React, { useState } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, GestureStateChangeEvent, GestureUpdateEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import Animated, {
     Extrapolation,
@@ -16,17 +15,16 @@ const THROTTLE_MIN = 0;
 const THROTTLE_MAX = 100;
 const THUMB_SIZE = 80;
 const THUMB_RADIUS = THUMB_SIZE / 2;
-const MAX_VOLTAGE = 15; // Assuming typical max voltage for Carrera slot cars; adjust based on actual setup
 
-export default function ThrottleControl() {
+type Props = {
+    onThrottleChange: (throttle: number) => void;
+};
+
+
+export default function ThrottleControl({ onThrottleChange }: Props) {
     const positionY = useSharedValue(SLIDER_HEIGHT - THUMB_RADIUS);
     const startY = useSharedValue(0);
-    const [throttleValue, setThrottleValue] = useState(0);
-    const mqttThrottle = useMqtt();
-
-    // TODO: In the future, replace this calculation with real voltage data subscribed from the MQTT broker
-    // For now, calculate estimated voltage based on throttle position (may be inaccurate)
-    const voltage = (throttleValue / THROTTLE_MAX) * MAX_VOLTAGE;
+    const lastValue = useSharedValue(-1);
 
     const getThrottleValue = (yPosition: number) => {
         'worklet'; // Mark as worklet
@@ -39,17 +37,6 @@ export default function ThrottleControl() {
         );
     };
 
-    const publishThrottle = (value: number) => {
-        const roundedValue = Math.round(value * 10) / 10;
-        if (value !== throttleValue) {
-            console.log(`Throttle: ${roundedValue.toFixed(1)}%`); // Fix template string
-            //send only if changed
-            mqttThrottle.publishThrottle(roundedValue);
-
-        }
-        setThrottleValue(roundedValue);
-
-    };
 
     // Define the Gesture using the builder
     const panGesture = Gesture.Pan()
@@ -66,9 +53,14 @@ export default function ThrottleControl() {
             // Update the visual position of the thumb
             positionY.value = newY;
 
-            // Calculate throttle percentage and publish it
-            const value = getThrottleValue(positionY.value);
-            scheduleOnRN(publishThrottle, value);
+            // Compute throttle and round to 1 decimal
+            const value = Math.round(getThrottleValue(positionY.value) * 10) / 10;
+
+            // Only call onThrottleChange if it actually changed
+            if (value !== lastValue.value) {
+                lastValue.value = value;
+                scheduleOnRN(onThrottleChange, value);
+            }
         })
         .onEnd(() => {
             'worklet';
@@ -76,7 +68,7 @@ export default function ThrottleControl() {
             positionY.value = SLIDER_HEIGHT - THUMB_RADIUS; // Visual snap back to the bottom (0%)
 
             // Send 0% command on the JS thread
-            scheduleOnRN(publishThrottle, THROTTLE_MIN);
+            scheduleOnRN(onThrottleChange, THROTTLE_MIN);
         });
 
     // Animated styles
@@ -93,36 +85,22 @@ export default function ThrottleControl() {
         };
     });
 
+
     return (
-        <View style={styles.container}>
 
-            <View style={styles.sliderContainer}>
-                {/* Track Fill */}
-                <Animated.View style={[styles.trackFill, trackFillStyle]} />
+        <View style={styles.sliderContainer}>
+            {/* Track Fill */}
+            <Animated.View style={[styles.trackFill, trackFillStyle]} />
 
-                {/* Throttle Value Display */}
-                <Text style={styles.valueText}>{throttleValue !== 100 ? throttleValue.toFixed(1) : throttleValue}%</Text>
-
-                {/* Voltage Display (on the other side) */}
-                <Text style={styles.voltageText}>{voltage.toFixed(1)}V</Text>
-
-                {/* Use GestureDetector and pass the built panGesture */}
-                <GestureDetector gesture={panGesture}>
-                    <Animated.View style={[styles.thumb, thumbStyle]} />
-                </GestureDetector>
-            </View>
+            <GestureDetector gesture={panGesture}>
+                <Animated.View style={[styles.thumb, thumbStyle]} />
+            </GestureDetector>
         </View>
     );
 }
 
 // Styles
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 50
-    },
     sliderContainer: {
         width: 80,
         height: SLIDER_HEIGHT,
@@ -157,21 +135,5 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.8,
         shadowRadius: 2,
         elevation: 5,
-    },
-    valueText: {
-        position: 'absolute',
-        top: 20,
-        left: 95,
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    voltageText: {
-        position: 'absolute',
-        top: 20,
-        left: -90, // Changed to left for better positioning on the left side; adjust as needed for spacing
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
     },
 });
