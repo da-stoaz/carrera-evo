@@ -64,10 +64,10 @@ export function calculateAverageGas(throttleData: ThrottleDataPoint[]): string {
   return (sum / throttleData.length).toFixed(1);
 }
 
-export function calculateLapTime(throttleData: ThrottleDataPoint[]): string {
-  if (!throttleData || !throttleData.length) return '0.00';
+export function calculateLapTime(throttleData: ThrottleDataPoint[]): number {
+  if (!throttleData || !throttleData.length) return 0;
   const start = throttleData[0].t;
   const end = throttleData[throttleData.length - 1].t;
   // Assuming time in ms, convert to seconds
-  return ((end - start) / 1000).toFixed(2);
+  return ((end - start) / 1000);
 }

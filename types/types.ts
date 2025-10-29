@@ -14,7 +14,7 @@ export interface ThrottleDataPoint {
  */
 export interface Lap {
   id: number; // Unique identifier for the lap
-  date: number; // Timestamp of when the lap was recorded (e.g., from Date.now())
+  date: Date; // Timestamp of when the lap was recorded (e.g., from Date.now())
   throttleData: ThrottleDataPoint[];
   lapTime?: number; // Optional pre-calculated lap time in seconds
 }

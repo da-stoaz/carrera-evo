@@ -29,7 +29,7 @@ export default function TabLayout() {
         name="laps"
         options={{
           title: 'Aufgezeichnete Runden',
-          tabBarLabel: "Runden",
+          tabBarLabel: "Laps",
           tabBarIcon: ({ color }) => <Ionicons name="timer" size={24} color={color} />,
         }}
       />

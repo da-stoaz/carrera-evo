@@ -13,16 +13,20 @@ function handleLightGateTriggered(payload: string) {
 
 export default function HomeScreen() {
   const headerHeight = useHeaderHeight()
-  const { isRecording, data, start, stop, addSample } = useThrottleRecorder();
+  const { isRecording, data, start, stop, addThrottlePoint, save } = useThrottleRecorder();
   const [throttleValue, setThrottleValue] = useState(0);
+
   // TODO: In the future, replace this calculation with real voltage data subscribed from the MQTT broker
   const voltage = (throttleValue / 100) * 15;
 
 
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     if (isRecording) {
-      const final = stop();
-      console.log('Lap finished –', JSON.stringify(final, null, 2));
+      const recordedDataPoints = stop();
+      console.log('Lap finished –', JSON.stringify(recordedDataPoints, null, 2));
+      const savedLap = await save();
+      console.log('Saved lap ID:', savedLap.id);
+
     } else {
       start();
     }
@@ -63,7 +67,7 @@ export default function HomeScreen() {
             setThrottleValue(throttle)
             console.log(throttle)
             publishThrottle(throttle)
-            if (isRecording) addSample(throttle)
+            if (isRecording) addThrottlePoint(throttle)
           }} />
 
           <Text style={styles.voltageText}>{voltage.toFixed(1)}V</Text>

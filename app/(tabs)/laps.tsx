@@ -1,106 +1,93 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// screens/LapsScreen.tsx
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Images } from '@/assets';
+import { useLaps } from '@/hooks/useLaps';
 import { calculateLapTime } from '@/lib/utils';
-import { Lap } from '@/types/types';
+import { Lap, ThrottleDataPoint } from '@/types/types';
 import { useHeaderHeight } from '@react-navigation/elements';
-
-
 
 export default function LapsScreen() {
   const headerHeight = useHeaderHeight();
   const router = useRouter();
-  const [laps, setLaps] = useState<Lap[]>([]);
+  const { laps, isLoading, deleteLap, addLap } = useLaps();
 
+  // Generate sample data **only once** when no laps exist
   useEffect(() => {
-    loadLaps();
-  }, );
+    if (!isLoading && (!laps || laps.length === 0)) {
+      const sample = Array.from({ length: 10000 }, (_, i) => ({
+        t: i,
+        v: Math.round((Math.sin(i / 100) + 1) * 50),
+      })) as ThrottleDataPoint[];
 
-  const loadLaps = async () => {
-    const throttlesample = Array.from({ length: 10000 }, (_, i) => ({
-      t: i, // unique ascending value
-      v: Math.round((Math.sin(i / 100) + 1) * 50)
-    }));
+      const initialLaps: Lap[] = [
+        { id: 1, date: new Date("2025-10-15"), throttleData: sample },
+        { id: 2, date: new Date("2025-10-15"), throttleData: sample.slice(5000, 8888) },
+        { id: 3, date: new Date("2025-10-15"), throttleData: sample.slice(444, 9330) },
+        { id: 4, date: new Date("2025-10-15"), throttleData: sample.slice(3453, 10000) },
+        { id: 5, date: new Date("2025-10-15"), throttleData: sample.slice(100, 8004) },
+      ];
 
-    try {
-      const json = await AsyncStorage.getItem('laps');
-      if (json && JSON.parse(json).length > 0) {
-        let laps = JSON.parse(json);
-        setLaps(laps as Lap[]);
-      } else {
-        // Sample data for initial load
-        const initialLaps: Lap[] = [
-          { id: 1, date: new Date("2025-10-15").getTime(), throttleData: throttlesample },
-          { id: 2, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(5000, 8888) },
-          { id: 3, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(444, 9330) },
-          { id: 4, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(3453, 10000) },
-          { id: 5, date: new Date("2025-10-15").getTime(), throttleData: throttlesample.slice(100, 8004) }
-        ];
-        setLaps(initialLaps);
-        saveLaps(initialLaps);
-      }
-    } catch (e) {
-      console.error('Failed to load laps', e);
+      initialLaps.forEach(lap => addLap(lap.throttleData));
     }
-  };
-
-  const saveLaps = async (newLaps: Lap[]) => {
-    try {
-      await AsyncStorage.setItem('laps', JSON.stringify(newLaps));
-    } catch (e) {
-      console.error('Failed to save laps', e);
-    }
-  };
+  }, [isLoading, laps, addLap]);
 
   const handleDelete = (id: number) => {
-    Alert.alert(`Runde ${id} Löschen?`, 'Eine wiederherstellung ist nicht möglich.', [
+    Alert.alert(`Runde ${id} Löschen?`, 'Eine Wiederherstellung ist nicht möglich.', [
       { text: 'Abbrechen', style: 'cancel' },
-      {
-        text: 'Löschen', onPress: () => {
-          const newLaps = laps.filter((lap) => lap.id !== id);
-          setLaps(newLaps);
-          saveLaps(newLaps);
-        }
-      },
+      { text: 'Löschen', style: 'destructive', onPress: () => deleteLap(id) },
     ]);
   };
 
   const handleSelectLap = (lap: Lap) => {
-    router.push(`/lap/${lap.id.toString()}`);
+    router.push(`/lap/${lap.id}`);
   };
 
-  const renderItem = ({ item }: { item: Lap }) => (
-    <TouchableOpacity
-      style={styles.listItem}
-      onPress={() => handleSelectLap(item)}
-      activeOpacity={0.6}
-    >
-      <View style={styles.infoContainer}>
-        <Text style={styles.listText}>
-          {`Runde ${item.id}`}
-        </Text>
-        <Text style={styles.listText}>
-          {new Date(item.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
-        </Text>
-        <Text style={styles.listText}>
-          {item.lapTime !== undefined ? item.lapTime.toFixed(2) : calculateLapTime(item.throttleData)}s
-        </Text>
-      </View>
+  const renderItem = ({ item }: { item: Lap }) => {
+    const lapTime = item.lapTime ?? calculateLapTime(item.throttleData);
+
+    return (
       <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={(e) => {
-          e.stopPropagation();
-          handleDelete(item.id);
-        }}
-        activeOpacity={0.7}
+        style={styles.listItem}
+        onPress={() => handleSelectLap(item)}
+        activeOpacity={0.6}
       >
-        <Text style={styles.buttonText}>Löschen</Text>
+        <View style={styles.infoContainer}>
+          <Text style={styles.listText}>Runde {item.id}</Text>
+          <Text style={styles.listText}>
+            {item.date.toLocaleString('de-DE', {
+              dateStyle: 'short',
+              timeStyle: 'short',
+            })}
+          </Text>
+          <Text style={styles.listText}>{lapTime.toFixed(2)}s</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleDelete(item.id);
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Löschen</Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <ImageBackground source={Images.raceTrack} style={styles.background} blurRadius={20}>
+        <View style={styles.overlay} />
+        <View style={styles.container}>
+          <Text style={styles.emptyText}>Lade Runden...</Text>
+        </View>
+      </ImageBackground>
+    );
+  }
 
   return (
     <ImageBackground
@@ -114,9 +101,13 @@ export default function LapsScreen() {
         <FlatList<Lap>
           data={laps}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={laps.length === 0 ? styles.emptyContainer : {paddingTop: headerHeight}}
-          ListEmptyComponent={<Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={
+            laps.length === 0 ? styles.emptyContainer : { paddingTop: headerHeight }
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>
+          }
           showsVerticalScrollIndicator={false}
         />
       </View>
@@ -124,19 +115,11 @@ export default function LapsScreen() {
   );
 }
 
+// Styles (unchanged)
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-  },
+  background: { flex: 1 },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
+  container: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
