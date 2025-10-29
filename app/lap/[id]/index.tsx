@@ -5,7 +5,7 @@ import { Lap } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ImageBackground, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import * as Progress from 'react-native-progress';
 import LapChart from './LapChart';
@@ -23,6 +23,12 @@ export default function LapDetailsPage() {
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef(0);
   const currentIndexRef = useRef(0);
+
+  const isReplayingRef = useRef(false);
+  const setIsReplayingSafe = (value: boolean) => {
+    isReplayingRef.current = value;
+    setIsReplaying(value);
+  };
 
   const headerHeight = useHeaderHeight();
 
@@ -60,57 +66,81 @@ export default function LapDetailsPage() {
     loadLap();
   }, [lapId, router]);
 
-  const stopReplay = () => {
+  const stopReplay = useCallback(() => {
+    isReplayingRef.current = false;
     setIsReplaying(false);
-    if (rafRef.current) {
+    setProgress(0);
+
+    if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    setProgress(0);
-  };
+
+    console.log('Replay stopped');
+  }, []);
 
   const startReplay = () => {
-    if (!lap || !lap.throttleData.length) return;
+    if (!lap || !lap.throttleData.length || isReplayingRef.current) return;
 
-    setIsReplaying(true);
+    setIsReplayingSafe(true);
     setProgress(0);
     currentIndexRef.current = 0;
     startTimeRef.current = performance.now();
+    rafRef.current = null;
+
     const throttleData = lap.throttleData;
     const baseTime = throttleData[0].t;
+    const totalDuration = throttleData[throttleData.length - 1].t - baseTime;
 
-    const playStep = (timestamp: number) => {
-      if (!isReplaying) return;
+    console.log(`Replay START: ${throttleData.length} pts over ${totalDuration}ms`);
 
-      const elapsed = timestamp - startTimeRef.current;
+    const playStep = (now: number) => {
+      if (!isReplayingRef.current) return;
 
-      while (currentIndexRef.current < throttleData.length && (throttleData[currentIndexRef.current].t - baseTime) <= elapsed) {
+      const elapsedMs = now - startTimeRef.current;
+
+      // --- PUBLISH ALL DUE POINTS ---
+      let published = 0;
+      while (currentIndexRef.current < throttleData.length) {
         const point = throttleData[currentIndexRef.current];
+        const pointTime = point.t - baseTime;
+
+        if (pointTime > elapsedMs) break; // Wait for next frame
+
+        // Paho queues this — native thread sends
         publishThrottle(point.v);
         currentIndexRef.current++;
+        published++;
       }
 
-      setProgress(currentIndexRef.current / throttleData.length);
+      // --- SMOOTH PROGRESS ---
+      const progress = Math.min(elapsedMs / totalDuration, 1);
+      setProgress(progress);
 
+      // --- END OF LAP ---
       if (currentIndexRef.current >= throttleData.length) {
+        console.log(`Replay FINISHED: ${published} sent this frame`);
         if (loop) {
           currentIndexRef.current = 0;
           startTimeRef.current = performance.now();
-          rafRef.current = requestAnimationFrame(playStep);
         } else {
           stopReplay();
         }
-      } else {
-        rafRef.current = requestAnimationFrame(playStep);
+        return;
       }
+
+      // --- NEXT FRAME ---
+      rafRef.current = requestAnimationFrame(playStep);
     };
 
     rafRef.current = requestAnimationFrame(playStep);
   };
 
   useEffect(() => {
-    return () => stopReplay(); // Cleanup on unmount
-  }, []);
+    return () => {
+      stopReplay();
+    };
+  }, [stopReplay]);
 
   if (!lap) {
     return (
