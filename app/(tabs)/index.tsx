@@ -1,6 +1,8 @@
 import { Images } from '@/assets';
+import RecordingIndicator from '@/components/RecordingIndicator';
 import ThrottleControl from '@/components/throttle-control';
-import { useThrottleRecorder } from '@/hooks/useThrottleRecorder';
+import { useRecorder } from '@/context/RecorderContext';
+
 import { disconnectMqtt, initMqtt, publishThrottle, subscribeToTopic } from '@/lib/mqttClient';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useState } from 'react';
@@ -13,7 +15,7 @@ function handleLightGateTriggered(payload: string) {
 
 export default function HomeScreen() {
   const headerHeight = useHeaderHeight()
-  const { isRecording, data, start, stop, addThrottlePoint, save } = useThrottleRecorder();
+  const { isRecording, data, start, stop, addThrottlePoint, save } = useRecorder();
   const [throttleValue, setThrottleValue] = useState(0);
 
   // TODO: In the future, replace this calculation with real voltage data subscribed from the MQTT broker
@@ -51,6 +53,7 @@ export default function HomeScreen() {
     >
       <View style={styles.overlay} />
       <View style={[styles.container, { paddingTop: headerHeight + 20 }]}>
+
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.recordButton}
@@ -60,6 +63,8 @@ export default function HomeScreen() {
             {!isRecording ? "Runde Aufzeichnen" : "Aufzeichnung beenden"}
           </Text>
         </TouchableOpacity>
+        <RecordingIndicator />
+
         <View style={styles.throttleContainer}>
 
           <Text style={styles.valueText}>{throttleValue !== 100 ? throttleValue.toFixed(1) : throttleValue}%</Text>

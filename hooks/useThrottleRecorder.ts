@@ -5,7 +5,6 @@ import { useLaps } from './useLaps';
 
 /**
  * Hook for recording throttle data during a lap.
-
  */
 export function useThrottleRecorder() {
     const [isRecording, setIsRecording] = useState(false);
