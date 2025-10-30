@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Images } from '@/assets';
-import { useLaps } from '@/hooks/useLaps';
+import { useLapsContext } from '@/context/LapsContext';
 import { calculateLapTime } from '@/lib/utils';
 import { Lap, ThrottleDataPoint } from '@/types/types';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -12,7 +12,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 export default function LapsScreen() {
   const headerHeight = useHeaderHeight();
   const router = useRouter();
-  const { laps, isLoading, deleteLap, addLap } = useLaps();
+  const { laps, isLoading, deleteLap, addLap } = useLapsContext();
 
   // Generate sample data **only once** when no laps exist
   useEffect(() => {

@@ -39,7 +39,7 @@ export function useLaps() {
 
     useEffect(() => {
         loadLaps();
-    }, ); // ← Remove [] → run on every mount
+    }, []); // ← Remove [] → run on every mount
 
  //  Add a lap – generates a tiny sequential id, returns the new Lap
     const addLap = useCallback(

@@ -1,7 +1,7 @@
 // hooks/useThrottleRecorder.ts
+import { useLapsContext } from '@/context/LapsContext';
 import { Lap, ThrottleDataPoint } from '@/types/types';
 import { useCallback, useRef, useState } from 'react';
-import { useLaps } from './useLaps';
 
 /**
  * Hook for recording throttle data during a lap.
@@ -10,7 +10,7 @@ export function useThrottleRecorder() {
     const [isRecording, setIsRecording] = useState(false);
     const [data, setData] = useState<ThrottleDataPoint[]>([]);
     const startRef = useRef<number | null>(null);
-    const { addLap } = useLaps(); // <-- automatically persists
+    const { addLap } = useLapsContext(); // <-- automatically persists
 
     const start = useCallback(() => {
         setData([]);
