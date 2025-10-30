@@ -14,8 +14,8 @@ export default function ReplayLap({ throttleData }: ReplayLapProps) {
     const [progress, setProgress] = useState(0);
     const [loop, setLoop] = useState(false);
 
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null); // ← Fixed type
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // ← Fixed type
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const startTimeRef = useRef(0);
     const currentIndexRef = useRef(0);
     const isReplayingRef = useRef(false);
@@ -111,27 +111,29 @@ export default function ReplayLap({ throttleData }: ReplayLapProps) {
     }, [stopReplay]);
 
     return (
-        <View style={styles.replayContainer}>
-            <View style={styles.loopContainer}>
-                <Text style={styles.label}>Loop</Text>
-                <Switch
-                    value={loop}
-                    onValueChange={setLoop}
-                    thumbColor={loop ? "white" : "white"}
-                    trackColor={{ false: "white", true: "red" }}
-                    style={{ marginTop: 6 }}
-                />
-            </View>
+        <View>
+            <View style={styles.replayContainer}>
+                <View style={styles.loopContainer}>
+                    <Text style={styles.label}>Loop</Text>
+                    <Switch
+                        value={loop}
+                        onValueChange={setLoop}
+                        thumbColor={loop ? "white" : "white"}
+                        trackColor={{ false: "white", true: "red" }}
+                        style={{ marginTop: 6 }}
+                    />
+                </View>
 
-            {!isReplaying ? (
-                <TouchableOpacity style={styles.replayButton} onPress={startReplay} activeOpacity={0.8}>
-                    <Text style={styles.buttonText}>Abspielen</Text>
-                </TouchableOpacity>
-            ) : (
-                <TouchableOpacity style={styles.cancelButton} onPress={stopReplay} activeOpacity={0.8}>
-                    <Text style={styles.buttonText}>Abbrechen</Text>
-                </TouchableOpacity>
-            )}
+                {!isReplaying ? (
+                    <TouchableOpacity style={styles.replayButton} onPress={startReplay} activeOpacity={0.8}>
+                        <Text style={styles.buttonText}>Abspielen</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.cancelButton} onPress={stopReplay} activeOpacity={0.8}>
+                        <Text style={styles.buttonText}>Abbrechen</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
 
             {isReplaying && (
                 <Progress.Bar
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 10, marginBottom: 20
+        marginTop: 10, marginBottom: 5
     },
     loopContainer: {
         alignItems: 'flex-start'
