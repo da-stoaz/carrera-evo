@@ -34,10 +34,21 @@ export default function ReplayLap({ throttleData }: ReplayLapProps) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
+
+        // Send throttle 0 to reset the car voltage regulation
+        publishThrottle(0);
     }, []);
 
     const scheduleNext = useCallback((index: number) => {
         if (!isReplayingRef.current || index >= throttleData.length) {
+            // Calculate and log the actual duration for debugging
+            const actualEndTime = performance.now();
+            const actualDuration = actualEndTime - startTimeRef.current;
+            const baseTime = throttleData[0]?.t ?? 0;
+            const expectedDuration = (throttleData[throttleData.length - 1]?.t ?? baseTime) - baseTime;
+            const offBy = actualDuration - expectedDuration;
+            console.log(`Replay completed. Expected duration: ${expectedDuration}ms, Actual: ${actualDuration}ms, Off by: ${offBy}ms`);
+
             if (index >= throttleData.length && loop && isReplayingRef.current) {
                 // Loop: Reset and continue
                 currentIndexRef.current = 0;
@@ -155,7 +166,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 10, marginBottom: 5
+        marginTop: 10, marginBottom: 12
     },
     loopContainer: {
         alignItems: 'flex-start'
