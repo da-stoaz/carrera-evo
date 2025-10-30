@@ -4,13 +4,13 @@
     "slug": "carrera-go",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "scheme": "carrerago",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stoaz.carrerago",
+      "bundleIdentifier": "net.stoaz.carrerago",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -18,13 +18,13 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.stoaz.carrerago"
+      "package": "net.stoaz.carrerago"
     },
     "web": {
       "output": "static",
