@@ -1,8 +1,7 @@
 import { Images } from '@/assets';
+import { useLaps } from '@/hooks/useLaps'; // ← Import your custom hook
 import { publishThrottle } from '@/lib/mqttClient';
 import { calculateAverageGas, calculateLapTime } from "@/lib/utils";
-import { Lap } from '@/types/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -16,15 +15,17 @@ export default function LapDetailsPage() {
   const { id } = useLocalSearchParams();
   const lapId = typeof id === 'string' ? parseInt(id, 10) : null;
 
-  const [lap, setLap] = useState<Lap | null>(null);
+  const { laps, isLoading } = useLaps(); // ← Use custom hook
+
   const [isReplaying, setIsReplaying] = useState(false);
   const [loop, setLoop] = useState(false);
   const [progress, setProgress] = useState(0);
+
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef(0);
   const currentIndexRef = useRef(0);
-
   const isReplayingRef = useRef(false);
+
   const setIsReplayingSafe = (value: boolean) => {
     isReplayingRef.current = value;
     setIsReplaying(value);
@@ -32,54 +33,38 @@ export default function LapDetailsPage() {
 
   const headerHeight = useHeaderHeight();
 
+  // Set header title
   useLayoutEffect(() => {
     if (lapId != null) {
       navigation.setOptions({ title: `Rundendetails ${lapId}` });
     }
   }, [navigation, lapId]);
 
+  // Find the lap from the list provided by useLaps
+  const lap = lapId != null ? laps.find(l => l.id === lapId) : null;
+
+  // Handle invalid lap ID early
   useEffect(() => {
     if (lapId === null || isNaN(lapId)) {
       router.back();
-      return;
+    } else if (!isLoading && lap === undefined) {
+      // Lap not found and data is loaded → go back
+      router.back();
     }
-
-    const loadLap = async () => {
-      try {
-        const json = await AsyncStorage.getItem('laps');
-        if (!json) {
-          router.back();
-          return;
-        }
-        const laps: Lap[] = JSON.parse(json);
-        const selectedLap = laps.find(l => l.id === lapId);
-        if (!selectedLap) {
-          router.back();
-          return;
-        }
-        setLap(selectedLap);
-      } catch (e) {
-        console.error('Failed to load lap', e);
-        router.back();
-      }
-    };
-    loadLap();
-  }, [lapId, router]);
+  }, [lapId, lap, isLoading, router]);
 
   const stopReplay = useCallback(() => {
     isReplayingRef.current = false;
     setIsReplaying(false);
     setProgress(0);
-
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-
     console.log('Replay stopped');
   }, []);
 
-  const startReplay = () => {
+  const startReplay = useCallback(() => {
     if (!lap || !lap.throttleData.length || isReplayingRef.current) return;
 
     setIsReplayingSafe(true);
@@ -98,26 +83,21 @@ export default function LapDetailsPage() {
       if (!isReplayingRef.current) return;
 
       const elapsedMs = now - startTimeRef.current;
-
-      // --- PUBLISH ALL DUE POINTS ---
       let published = 0;
+
       while (currentIndexRef.current < throttleData.length) {
         const point = throttleData[currentIndexRef.current];
         const pointTime = point.t - baseTime;
+        if (pointTime > elapsedMs) break;
 
-        if (pointTime > elapsedMs) break; // Wait for next frame
-
-        // Paho queues this — native thread sends
         publishThrottle(point.v);
         currentIndexRef.current++;
         published++;
       }
 
-      // --- SMOOTH PROGRESS ---
       const progress = Math.min(elapsedMs / totalDuration, 1);
       setProgress(progress);
 
-      // --- END OF LAP ---
       if (currentIndexRef.current >= throttleData.length) {
         console.log(`Replay FINISHED: ${published} sent this frame`);
         if (loop) {
@@ -129,26 +109,41 @@ export default function LapDetailsPage() {
         return;
       }
 
-      // --- NEXT FRAME ---
       rafRef.current = requestAnimationFrame(playStep);
     };
 
     rafRef.current = requestAnimationFrame(playStep);
-  };
+  }, [lap, loop, stopReplay]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopReplay();
     };
   }, [stopReplay]);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <ImageBackground source={Images.raceTrack} style={styles.background} resizeMode="cover" blurRadius={5}>
+        <View style={styles.overlay} />
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: headerHeight }}>
+          <View style={[styles.detailsContainer, styles.glassContainer]}>
+            <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
+          </View>
+        </View>
+      </ImageBackground>
+    );
+  }
+
+  // Not found (after loading)
   if (!lap) {
     return (
       <ImageBackground source={Images.raceTrack} style={styles.background} resizeMode="cover" blurRadius={5}>
         <View style={styles.overlay} />
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 0 }}>
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: headerHeight }}>
           <View style={[styles.detailsContainer, styles.glassContainer]}>
-            <Text style={styles.modalTitle}>Lade Rundendetails...</Text>
+            <Text style={styles.modalTitle}>Runde nicht gefunden</Text>
           </View>
         </View>
       </ImageBackground>
@@ -173,23 +168,23 @@ export default function LapDetailsPage() {
             Datum: <Text style={styles.value}>{new Date(lap.date).toLocaleString('de-DE')}</Text>
           </Text>
           <Text style={styles.label}>
-            Rundenzeit: <Text style={styles.value}>{lap.lapTime !== undefined ? lap.lapTime.toFixed(2) : calculateLapTime(lap.throttleData)}s</Text>
+            Rundenzeit: <Text style={styles.value}>
+              {lap.lapTime !== undefined ? lap.lapTime.toFixed(2) : calculateLapTime(lap.throttleData)}s
+            </Text>
           </Text>
 
           <LapChart throttleData={lap.throttleData} />
 
-          <View style={[styles.replayContainer]}>
+          <View style={styles.replayContainer}>
             <View style={styles.loopContainer}>
-              <View style={{ flexDirection: 'column' }}>
-                <Text style={styles.label}>Loop</Text>
-                <Switch
-                  value={loop}
-                  onValueChange={setLoop}
-                  thumbColor={loop ? "white" : "white"}
-                  trackColor={{ false: "white", true: "red" }}
-                  style={{ marginTop: 6 }}
-                />
-              </View>
+              <Text style={styles.label}>Loop</Text>
+              <Switch
+                value={loop}
+                onValueChange={setLoop}
+                thumbColor={loop ? "white" : "white"}
+                trackColor={{ false: "white", true: "red" }}
+                style={{ marginTop: 6 }}
+              />
             </View>
 
             {!isReplaying ? (

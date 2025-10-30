@@ -3,6 +3,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -10,6 +11,7 @@ export default function RootLayout() {
     const colorScheme = useColorScheme();
 
     return (
+        // <React.StrictMode>
         <RecorderProvider>
             <SafeAreaProvider>
                 <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -44,5 +46,6 @@ export default function RootLayout() {
                 </ThemeProvider>
             </SafeAreaProvider>
         </RecorderProvider>
+        // </React.StrictMode>
     );
 }
