@@ -1,8 +1,16 @@
 // app/(tabs)/_layout.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
+
+  const colorScheme = useColorScheme();
+
+  const textStyle = {
+    color: colorScheme === 'dark' ? 'white' : 'black',
+  };
+
   return (
     <Tabs
       screenOptions={{
@@ -13,7 +21,7 @@ export default function TabLayout() {
 
         },
         headerTransparent: true,
-        headerTintColor: '#fefefe',
+        headerTintColor: textStyle.color,
       }}
     >
 
@@ -22,6 +30,7 @@ export default function TabLayout() {
         options={{
           title: 'Carrera Throttle Control',
           tabBarLabel: "Drive",
+          headerTintColor: '#fefefe',
           tabBarIcon: ({ color }) => <Ionicons name="speedometer-outline" size={24} color={color} />,
         }}
       />
@@ -30,6 +39,7 @@ export default function TabLayout() {
         options={{
           title: 'Aufgezeichnete Runden',
           tabBarLabel: "Laps",
+          headerTintColor: '#fefefe',
           tabBarIcon: ({ color }) => <Ionicons name="timer" size={24} color={color} />,
         }}
       />
@@ -37,7 +47,6 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Einstellungen',
-          headerTintColor: '#000000',
           tabBarIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} />,
         }}
       />

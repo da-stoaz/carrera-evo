@@ -75,7 +75,7 @@ export async function initMqtt() {
       statusEmitter.emit('statusChange', true); // Emit connected
     },
     onFailure: (error) => {
-      console.error(error);
+      console.error("MQTT Connection Failed. Check 'host' Details:" + error);
       statusEmitter.emit('statusChange', false); // Emit disconnected on failure
     },
     // userName: 'ubuntu',

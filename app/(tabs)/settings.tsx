@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHeaderHeight } from '@react-navigation/elements';
 import React, { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
@@ -14,6 +14,13 @@ export default function SettingsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [host, setHost] = useState('localhost'); // Default host
   const [currentHost, setCurrentHost] = useState('localhost'); // For display
+
+
+  const colorScheme = useColorScheme();
+
+  const textStyle = {
+    color: colorScheme === 'dark' ? 'white' : 'black',
+  };
 
   useEffect(() => {
     const loadCurrentHost = async () => {
@@ -35,20 +42,20 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={{ paddingTop: headerHeight }}>
       <View style={styles.hostContainer}>
-        <Text style={styles.hostText}>Verbindungsstatus:</Text>
+        <Text style={[styles.hostText, textStyle]}>Verbindungsstatus:</Text>
         {isConnected ?
           <View style={{ flex: 1, flexDirection: "row", alignItems: 'center', gap: 4, }}>
             <Ionicons color={"green"} name="checkmark-circle-outline" size={20} />
-            <Text>Verbunden</Text>
+            <Text style={textStyle}>Verbunden</Text> 
           </View>
           :
           <View style={{ flex: 1, flexDirection: "row", alignItems: 'center', gap: 4 }}>
             <Ionicons color={"red"} name="close-circle-outline" size={20} />
-            <Text>Getrennt</Text>
+            <Text style={textStyle}>Getrennt</Text> 
           </View>}
       </View>
       <View style={styles.hostContainer}>
-        <Text style={styles.hostText}>MQTT Host: {currentHost}</Text>
+        <Text style={[styles.hostText, textStyle]}>MQTT Host: {currentHost}</Text>
         <TouchableOpacity style={styles.editButton} onPress={() => setModalVisible(true)}>
           <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
