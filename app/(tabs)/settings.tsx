@@ -14,6 +14,8 @@ export default function SettingsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [host, setHost] = useState('localhost'); // Default host
   const [currentHost, setCurrentHost] = useState('localhost'); // For display
+  const [throttleTopic, setThrottleTopic] = useState("throttle")
+  const [currentThrottleTopic, setCurrentThrottleTopic] = useState("throttle")
 
 
   const colorScheme = useColorScheme();
@@ -39,6 +41,10 @@ export default function SettingsScreen() {
     setModalVisible(false);
   };
 
+  const handleThrottleTopicSave = async () => {
+    return
+  }
+
   return (
     <SafeAreaView style={{ paddingTop: headerHeight }}>
       <View style={styles.hostContainer}>
@@ -46,12 +52,12 @@ export default function SettingsScreen() {
         {isConnected ?
           <View style={{ flex: 1, flexDirection: "row", alignItems: 'center', gap: 4, }}>
             <Ionicons color={"green"} name="checkmark-circle-outline" size={20} />
-            <Text style={textStyle}>Verbunden</Text> 
+            <Text style={textStyle}>Verbunden</Text>
           </View>
           :
           <View style={{ flex: 1, flexDirection: "row", alignItems: 'center', gap: 4 }}>
             <Ionicons color={"red"} name="close-circle-outline" size={20} />
-            <Text style={textStyle}>Getrennt</Text> 
+            <Text style={textStyle}>Getrennt</Text>
           </View>}
       </View>
       <View style={styles.hostContainer}>
@@ -88,6 +94,27 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+        {/* <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>MQTT Throttle Topic ändern</Text>
+            <TextInput
+              style={styles.input}
+              value={host}
+              onChangeText={setHost}
+              placeholder="z.B. localhost"
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalButtonText}>Abbrechen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSave}>
+                <Text style={styles.modalButtonText}>Speichern</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View> */}
       </Modal>
     </SafeAreaView>
   );
