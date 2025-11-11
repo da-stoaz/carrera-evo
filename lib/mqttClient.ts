@@ -27,14 +27,14 @@ async function loadHost() {
   }
 }
 
-async function loadThrottleTopic() {
+export async function loadThrottleTopic() {
   const storedTopic = await AsyncStorage.getItem('mqtt_throttle_topic');
   if (storedTopic) {
     throttleTopic = storedTopic;
   }
 }
 
-async function saveThrottleTopic(topic: string) {
+export async function saveThrottleTopic(topic: string) {
   await AsyncStorage.setItem('mqtt_throttle_topic', topic);
 }
 
