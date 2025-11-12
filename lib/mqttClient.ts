@@ -225,7 +225,7 @@ export function sendMessage(topic: string, message: string) {
 
 // --- Subscription Management ---
 
-export function subscribeToTopic(topic: string, callback: (payload: string) => void) {
+export function subscribeTopic(topic: string, callback: (payload: string) => void) {
   if (!client || !client.isConnected()) {
     console.warn(`[MQTT] Client not connected. Queueing subscription for topic: ${topic}`);
     subscriptionQueue.push({ topic, callback });

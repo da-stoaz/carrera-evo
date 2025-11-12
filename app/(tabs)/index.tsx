@@ -3,7 +3,7 @@ import RecordingIndicator from '@/components/RecordingIndicator';
 import ThrottleControl from '@/components/throttle-control';
 import { useRecorder } from '@/context/RecorderContext';
 
-import { disconnectMqtt, initMqtt, publishThrottle, subscribeToTopic } from '@/lib/mqttClient';
+import { disconnectMqtt, initMqtt, publishThrottle, subscribeTopic } from '@/lib/mqttClient';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useState } from 'react';
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -37,7 +37,7 @@ export default function HomeScreen() {
   useEffect(() => {
     initMqtt();
 
-    subscribeToTopic('lightgate', handleLightGateTriggered);
+    subscribeTopic('lightgate', handleLightGateTriggered);
 
     // Cleanup on unmount
     return () => {
