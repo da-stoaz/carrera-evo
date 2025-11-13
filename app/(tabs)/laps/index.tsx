@@ -1,7 +1,8 @@
 // screens/LapsScreen.tsx
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Alert, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, ImageBackground, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Images } from '@/assets';
 import { useLapsContext } from '@/context/LapsContext';
@@ -13,6 +14,8 @@ export default function LapsScreen() {
   const headerHeight = useHeaderHeight();
   const router = useRouter();
   const { laps, isLoading, deleteLap, addLap } = useLapsContext();
+  const insets = useSafeAreaInsets();
+  const liquidGlass = Platform.OS === 'ios' && parseInt(Platform.Version.split('.')[0], 10) >= 26;
 
   // Generate sample data **only once** when no laps exist
   useEffect(() => {
@@ -103,7 +106,12 @@ export default function LapsScreen() {
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={
-            laps.length === 0 ? styles.emptyContainer : { paddingTop: headerHeight }
+            laps.length === 0
+              ? styles.emptyContainer
+              : {
+                  paddingTop: headerHeight,
+                  paddingBottom: liquidGlass ? 50 + insets.bottom : 0,
+                }
           }
           ListEmptyComponent={
             <Text style={styles.emptyText}>Keine Runden aufgezeichnet.</Text>
