@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import EventEmitter from 'events';
 import Paho from "paho-mqtt";
+import Toast from 'react-native-toast-message';
 
 // The Paho.Client instance
 let client: Paho.Client | null = null;
@@ -96,7 +97,12 @@ export async function initMqtt() {
       statusEmitter.emit('statusChange', true);
     },
     onFailure: (error) => {
-      console.error('[MQTT] Connection failed:', error);
+      //console.error('[MQTT] Connection failed:', error);
+      Toast.show({
+        type: "error",
+        text1: "MQTT Verbindung fehlgeschlagen",
+        text2: error.errorMessage
+      })
       statusEmitter.emit('statusChange', false);
     },
     useSSL: false,
@@ -121,7 +127,12 @@ export function disconnectMqtt() {
       console.log('[MQTT] Disconnected.');
       statusEmitter.emit('statusChange', false);
     } catch (e) {
-      console.error('[MQTT] Error during disconnect:', e);
+      Toast.show({
+        type: "error",
+        text1: "Fehler beim Trennen der Verbindung",
+
+      })
+      //console.error('[MQTT] Error during disconnect:', e);
     }
   }
   client = null;
@@ -175,7 +186,12 @@ export async function setThrottleTopic(newTopic: string) {
         // Here we don't auto-attach a callback unless previously set via subscribeToTopic
       },
       onFailure: (err) => {
-        console.error(`[MQTT] Failed to subscribe to new throttle topic ${newTopic}:`, err);
+        Toast.show({
+          type: "error",
+          text1: "MQTT Subscription Fehler",
+          text2: `Failed to subscribe to new throttle topic ${newTopic}:`
+        })
+        //console.error(`[MQTT] Failed to subscribe to new throttle topic ${newTopic}:`, err);
       }
     });
   }
@@ -202,7 +218,12 @@ export function publishThrottle(throttleValue: number) {
     client.send(pahoMessage);
     console.log(`[MQTT] Published to ${throttleTopic}: ${throttleValue}`);
   } catch (e) {
-    console.error(`[MQTT] Failed to publish to ${throttleTopic}:`, e);
+    Toast.show({
+      type: "error",
+      text1: "MQTT Fehler",
+      text2: `Failed to publish to ${throttleTopic}:`
+    })
+    //console.error(`[MQTT] Failed to publish to ${throttleTopic}:`, e);
   }
 }
 
@@ -219,7 +240,12 @@ export function sendMessage(topic: string, message: string) {
     client.send(pahoMessage);
     console.log(`[MQTT] Published to ${topic}: ${message}`);
   } catch (e) {
-    console.error(`[MQTT] Failed to publish to ${topic}:`, e);
+    //console.error(`[MQTT] Failed to publish to ${topic}:`, e);
+    Toast.show({
+      type: "error",
+      text1: "MQTT Fehler",
+      text2: `Failed to publish to ${topic}:`
+    })
   }
 }
 
@@ -238,7 +264,12 @@ export function subscribeTopic(topic: string, callback: (payload: string) => voi
       topicCallbacks.set(topic, callback);
     },
     onFailure: (error) => {
-      console.error(`[MQTT] Failed to subscribe to topic ${topic}:`, error);
+      Toast.show({
+        type: "error",
+        text1: "MQTT Fehler",
+        text2: `Failed to subscribe to topic ${topic}:`
+      })
+      //console.error(`[MQTT] Failed to subscribe to topic ${topic}:`, error);
     }
   });
 }
@@ -268,11 +299,21 @@ export function unsubscribeTopic(topic: string) {
         topicCallbacks.delete(topic);
       },
       onFailure: (error) => {
-        console.error(`[MQTT] Failed to unsubscribe from topic ${topic}:`, error);
+        Toast.show({
+          type: "error",
+          text1: "MQTT Fehler",
+          text2: `Failed to unsubscribe from topic ${topic}:`
+        })
+        //console.error(`[MQTT] Failed to unsubscribe from topic ${topic}:`, error);
       }
     });
   } catch (e) {
-    console.error(`[MQTT] Exception during unsubscribe from ${topic}:`, e);
+    //console.error(`[MQTT] Exception during unsubscribe from ${topic}:`, e);
+    Toast.show({
+      type: "error",
+      text1: "MQTT Unsubscribe Fehler",
+      text2: `Exception during unsubscribe from ${topic}:`
+    })
     topicCallbacks.delete(topic); // Force remove callback anyway
   }
 }

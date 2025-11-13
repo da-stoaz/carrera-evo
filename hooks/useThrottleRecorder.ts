@@ -40,8 +40,8 @@ export function useThrottleRecorder() {
        * Save the current lap using `useLaps`.
        * Returns the newly saved Lap object (with id, date, etc.).
        */
-    const save = useCallback(async (): Promise<Lap> => {
-        if (data.length === 0) throw new Error('No data to save');
+    const save = useCallback(async (): Promise<Lap | null> => {
+        if (data.length === 0) return null;
         const savedLap = await addLap(data); // `useLaps` handles ID, date, storage
         setData([]); // optional: clear after save
         return savedLap;

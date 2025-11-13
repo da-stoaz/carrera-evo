@@ -1,3 +1,4 @@
+import toastConfig from '@/constants/toastConfig';
 import { LapsProvider } from '@/context/LapsContext';
 import { RecorderProvider } from '@/context/RecorderContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -7,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from "react-native-toast-message";
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
@@ -42,6 +44,7 @@ export default function RootLayout() {
                                 />
                                 <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
                             </Stack>
+                            <Toast config={toastConfig} position="bottom" />
                             {/* Setting StatusBar style to reflect the dark background of the detail page */}
                             <StatusBar style="auto" />
                         </GestureHandlerRootView>

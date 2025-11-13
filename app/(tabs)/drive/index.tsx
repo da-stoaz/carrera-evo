@@ -7,6 +7,7 @@ import { disconnectMqtt, initMqtt, publishThrottle, subscribeTopic } from '@/lib
 import { useEffect, useState } from 'react';
 import { ImageBackground, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 function handleLightGateTriggered(payload: string) {
     console.log(`Status update received: ${payload}`);
@@ -26,7 +27,18 @@ export default function DriveScreen() {
             const recordedDataPoints = stop();
             console.log('Lap finished –', JSON.stringify(recordedDataPoints, null, 2));
             const savedLap = await save();
-            console.log('Saved lap ID:', savedLap.id);
+            if (savedLap) {
+                Toast.show({
+                    type: "success",
+                    text1: "Runde " + savedLap.id + " erfolgreich gespeichert"
+                })
+            } else {
+                Toast.show({
+                    type: "error",
+                    text1: "Fehler beim Speichern: ",
+                    text2: "Die Runde enthält keine Daten!"
+                })
+            }
         } else {
             start();
         }
