@@ -1,6 +1,6 @@
 // app/(tabs)/settings.tsx
 import { useMqttStatus } from '@/hooks/use-mqtt-status';
-import { setMqttHost } from '@/lib/mqttClient'; // Import the setter function
+import { setMqttHost, setThrottleTopic } from '@/lib/mqttClient'; // Import the setter functions
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -12,9 +12,10 @@ export default function SettingsScreen() {
   const headerHeight = useHeaderHeight();
   const isConnected = useMqttStatus();
   const [modalVisible, setModalVisible] = useState(false);
+  const [throttleModalVisible, setThrottleTopicVisible] = useState(false);
   const [host, setHost] = useState('localhost'); // Default host
   const [currentHost, setCurrentHost] = useState('localhost'); // For display
-  const [throttleTopic, setThrottleTopic] = useState("throttle")
+  const [throttleTopic, setThrottleTopicState] = useState("throttle")
   const [currentThrottleTopic, setCurrentThrottleTopic] = useState("throttle")
 
 
@@ -32,7 +33,15 @@ export default function SettingsScreen() {
         setCurrentHost(storedHost);
       }
     };
+    const loadCurrentThrottleTopic = async () => {
+      const storedThrottleTopic = await AsyncStorage.getItem('mqtt_throttle_topic');
+      if (storedThrottleTopic) {
+        setThrottleTopicState(storedThrottleTopic);
+        setCurrentThrottleTopic(storedThrottleTopic);
+      }
+    };
     loadCurrentHost();
+    loadCurrentThrottleTopic();
   }, []);
 
   const handleSave = async () => {
@@ -42,7 +51,9 @@ export default function SettingsScreen() {
   };
 
   const handleThrottleTopicSave = async () => {
-    return
+    await setThrottleTopic(throttleTopic);
+    setCurrentThrottleTopic(throttleTopic); // Update display
+    setThrottleTopicVisible(false);
   }
 
   return (
@@ -63,6 +74,12 @@ export default function SettingsScreen() {
       <View style={styles.hostContainer}>
         <Text style={[styles.hostText, textStyle]}>MQTT Host: {currentHost}</Text>
         <TouchableOpacity style={styles.editButton} onPress={() => setModalVisible(true)}>
+          <Text style={styles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.hostContainer}>
+        <Text style={[styles.hostText, textStyle]}>MQTT Topic: {currentThrottleTopic}</Text>
+        <TouchableOpacity style={styles.editButton} onPress={() => setThrottleTopicVisible(true)}>
           <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -94,27 +111,35 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
-        {/* <View style={styles.modalContainer}>
+      </Modal>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={throttleModalVisible}
+        onRequestClose={() => setThrottleTopicVisible(false)}
+      >
+        <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>MQTT Throttle Topic ändern</Text>
             <TextInput
               style={styles.input}
-              value={host}
-              onChangeText={setHost}
-              placeholder="z.B. localhost"
+              value={throttleTopic}
+              onChangeText={setThrottleTopicState}
+              placeholder="z.B. /throttle"
               autoCapitalize="none"
               keyboardType="url"
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setThrottleTopicVisible(false)}>
                 <Text style={styles.modalButtonText}>Abbrechen</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSave}>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleThrottleTopicSave}>
                 <Text style={styles.modalButtonText}>Speichern</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View> */}
+        </View>
       </Modal>
     </SafeAreaView>
   );
