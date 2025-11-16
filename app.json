@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "carrera-go",
+    "name": "carrera-evo",
     "slug": "carrera-go",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "carrerago",
+    "scheme": "carrera-evo",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/icon.png",
@@ -15,7 +15,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "net.stoaz.carrerago",
+      "bundleIdentifier": "net.stoaz.carreraevo",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -29,7 +29,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "net.stoaz.carrerago"
+      "package": "net.stoaz.carreraevo"
     },
     "web": {
       "output": "static",
