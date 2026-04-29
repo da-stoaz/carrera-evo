@@ -33,7 +33,7 @@ export default function TabLayout() {
         <Tabs
           screenOptions={{
             tabBarActiveTintColor: 'red',
-            tabBarStyle: {}, // Keep your custom styles if any
+            tabBarStyle: {},
             headerTransparent: true,
             headerTintColor: textStyle.color,
           }}
