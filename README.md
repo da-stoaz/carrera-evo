@@ -43,7 +43,9 @@ npm install
 
 ---
 
-## 3. Start the MQTT broker
+## 3. Start the MQTT broker (local development only)
+
+The `mqtt-mosquitto/` folder contains a Docker Compose setup for running an MQTT broker on your laptop **for local development**. In production this is **not** used — see [Section 11: Production deployment](#11-production-deployment).
 
 The app talks to your car via an MQTT broker (Eclipse Mosquitto). A ready-to-use Docker setup is included.
 
@@ -210,6 +212,42 @@ carrera-evo/
 | `docker compose up -d` *(in mqtt-mosquitto/)* | Start the MQTT broker |
 | `docker compose down` *(in mqtt-mosquitto/)* | Stop the broker |
 | `npx expo-doctor` | Sanity-check the project setup |
+
+---
+
+## 11. Production deployment
+
+In production, the setup differs from local development:
+
+- **MQTT broker runs on the Raspberry Pi**, not on a laptop. The Pi sits next to the Carrera track and is the central hub: car controller, lightgate sensor, and phones all connect to it. The Docker Compose setup in `mqtt-mosquitto/` is for local development only and is not used in production.
+- **Phones connect to the Pi's IP** (or hostname) on the school's Wi-Fi. Configure the MQTT host in the app's Settings tab to point to the Pi.
+- **Apps can be pre-built** and installed on the school's phones in advance, so students don't need a dev environment to use them. Only the MQTT host needs to be configured on first launch.
+
+  ### iOS — local Release build
+
+  ```bash
+  npx expo run:ios --device --configuration Release
+  ```
+
+  This builds a Release `.ipa` locally with Xcode and installs it directly onto a connected iPhone. Fastest path for the school's own phones.
+
+  Limitations:
+  - You need a Mac with Xcode.
+  - An Apple Developer account is required to install on a physical device. The free personal account works but provisioning profiles expire after 7 days. A paid account ($99/yr) gives 1-year profiles and lets you register up to 100 devices.
+  - App Store distribution is theoretically possible but unlikely to pass Apple's review for a niche internal tool — TestFlight or ad-hoc provisioning is the realistic path.
+
+  ### Android — local Release build
+
+  ```bash
+  cd android
+  ./gradlew assembleRelease
+  ```
+
+  The signed `.apk` ends up in `android/app/build/outputs/apk/release/`. Copy it onto each phone (USB, email, cloud drive) and install — the phone needs "Install from unknown sources" enabled. No developer account or store needed.
+
+  ### Cloud builds (optional)
+
+  If you don't want to build locally, [EAS Build](https://docs.expo.dev/build/introduction/) (`eas build --platform ios|android`) builds in the cloud and produces a downloadable artifact. It's slower (queue + transfer time) and requires an Expo account, but doesn't need Xcode/Android Studio on your machine.
 
 ---
 
