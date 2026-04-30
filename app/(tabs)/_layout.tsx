@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { Platform, useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -17,16 +17,16 @@ export default function TabLayout() {
           tintColor="#ff0000"
         >
           <NativeTabs.Trigger name="drive">
-            <Label>Drive</Label>
-            <Icon sf="speedometer" drawable='custom_android_drawable' /> {/* Adjusted SF symbol to match theme; use 'house.fill' if preferred */}
+            <NativeTabs.Trigger.Label>Drive</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="speedometer" drawable="custom_android_drawable" />
           </NativeTabs.Trigger>
           <NativeTabs.Trigger name="laps">
-            <Label>Laps</Label>
-            <Icon sf="timer" />
+            <NativeTabs.Trigger.Label>Laps</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="timer" />
           </NativeTabs.Trigger>
           <NativeTabs.Trigger name="settings">
-            <Label>Settings</Label>
-            <Icon sf="gear" />
+            <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf="gear" />
           </NativeTabs.Trigger>
         </NativeTabs>
       ) : (
